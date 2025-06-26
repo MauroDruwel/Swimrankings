@@ -21,12 +21,23 @@ class Athlete(ScraperMixin):
 
     Methods:
     - `__init__(athlete_id, sessionManager, update_interval=60)`: Initializes the Athlete with an athlete ID and a requests session.
+    - `search_athletes(name, sessionManager, club_id=-1, gender=-1) -> list`: Static method to search for athletes by name.
     - `list_personal_bests() -> list`: Retrieves a list of personal bests for the athlete.
     - `list_meets() -> list`: Retrieves a list of meets in which the athlete has participated.
 
     Usage Example:
     ```python
     session_manager = SessionManager()
+    
+    # Search for athletes by name
+    search_results = Athlete.search_athletes('Mauro Druwel', session_manager)
+    if search_results:
+        athlete_id = search_results[0]['athlete_id']
+        athlete_instance = Athlete(athlete_id, session_manager, update_interval=120)
+        personal_bests = athlete_instance.list_personal_bests()
+        meets = athlete_instance.list_meets()
+    
+    # Or create directly with known ID
     athlete_instance = Athlete('athlete_id_here', session_manager, update_interval=120)
     personal_bests = athlete_instance.list_personal_bests()
     meets = athlete_instance.list_meets()
@@ -36,6 +47,7 @@ class Athlete(ScraperMixin):
     - This class inherits from `ScraperMixin` to leverage common functionality for making HTTP requests.
     - `athlete_id` is required to identify the athlete.
     - `sessionManager` is needed for making HTTP requests, and `update_interval` sets the minimum time between updates.
+    - Use `search_athletes()` to find athletes by name, which returns a list of matching athletes with their details.
     - Use `list_personal_bests()` to retrieve a list of personal bests, represented as dictionaries.
     - The personal bests data includes event name, course length, time, result ID, and result URL.
     - In case of an error or no data, an empty list is returned.
@@ -55,6 +67,87 @@ class Athlete(ScraperMixin):
         """
         super().__init__(sessionManager, update_interval)
         self.athlete_id = athlete_id
+
+    @staticmethod
+    def search_athletes(name, sessionManager, club_id=-1, gender=-1):
+        """
+        Searches for athletes by name.
+
+        Parameters:
+        - `name` (str): The name to search for (can be full name or last name).
+        - `sessionManager` (SessionManager): The SessionManager instance for making HTTP requests.
+        - `club_id` (int): Optional club ID filter (default: -1 for all clubs).
+        - `gender` (int): Optional gender filter (default: -1 for all genders).
+
+        Returns:
+        - `list`: A list of dictionaries containing information about each matching athlete.
+                  Each dictionary contains: athlete_id, name, birth_year, gender, country_code, club_name
+        """
+        # Create a temporary instance to use the mixin functionality
+        temp_instance = Athlete("temp", sessionManager)
+        
+        params = {
+            'internalRequest': 'athleteFind',
+            'athlete_clubId': club_id,
+            'athlete_gender': gender,
+            'athlete_lastname': name,
+            'athlete_firstname': ''
+        }
+        
+        try:
+            soup = temp_instance._get_page_content(params)
+            table = soup.find('table', {'class': 'athleteSearch'})
+            if not table:
+                return []
+        except AttributeError:
+            return []
+
+        data = []
+        for row in table.find_all('tr', {'class': ['athleteSearch0', 'athleteSearch1']}):
+            try:
+                # Extract athlete name and ID
+                name_cell = row.find('td', {'class': 'name'})
+                if not name_cell:
+                    continue
+                    
+                name_link = name_cell.find('a')
+                if not name_link:
+                    continue
+                    
+                athlete_name = name_link.get_text(strip=True).replace('<b>', '').replace('</b>', '')
+                athlete_url = name_link['href']
+                athlete_id = int(parse_qs(urlparse(athlete_url).query)['athleteId'][0])
+                
+                # Extract birth year
+                date_cell = row.find('td', {'class': 'date'})
+                birth_year = date_cell.get_text(strip=True) if date_cell else ''
+                
+                # Extract gender from image
+                gender_img = row.find('img')
+                gender = 'm' if gender_img and 'gender1.png' in gender_img['src'] else 'f'
+                
+                # Extract country code
+                code_cell = row.find('td', {'class': 'code'})
+                country_code = code_cell.get_text(strip=True) if code_cell else ''
+                
+                # Extract club name
+                club_cell = row.find('td', {'class': 'club'})
+                club_name = club_cell.get_text(strip=True) if club_cell else ''
+                
+                data.append({
+                    'athlete_id': athlete_id,
+                    'name': athlete_name,
+                    'birth_year': birth_year,
+                    'gender': gender,
+                    'country_code': country_code,
+                    'club_name': club_name
+                })
+                
+            except (AttributeError, ValueError, KeyError, IndexError):
+                # Skip rows that can't be parsed correctly
+                continue
+                
+        return data
 
     def list_personal_bests(self, season="-1") -> list:
         """
