@@ -11,7 +11,7 @@ with open(path.join(here, 'README.md')) as f:
 
 setup(
     name='swimrankingsscraper',
-    version='0.1.4',
+    version='0.1.5',
     description='A scraper for swimrankings.net',
     long_description=long_description,
     long_description_content_type='text/markdown',
