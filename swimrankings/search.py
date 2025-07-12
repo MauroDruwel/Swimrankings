@@ -3,7 +3,7 @@ Athletes search class for finding athletes on swimrankings.net.
 """
 
 import re
-from typing import List, Optional, Iterator, Union, Dict
+from typing import List, Optional, Iterator, Union, Dict, Any
 from urllib.parse import urljoin
 
 import requests
@@ -271,7 +271,7 @@ class Athletes:
             if athlete.gender.lower() == gender.lower()
         ]
 
-    def to_dict(self) -> List[dict]:
+    def to_dict(self) -> List[Dict[str, Any]]:
         """
         Convert all athletes to a list of dictionaries.
         

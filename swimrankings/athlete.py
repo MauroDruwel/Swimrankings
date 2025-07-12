@@ -3,12 +3,12 @@ Core Athlete class for individual athlete data and details.
 """
 
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
-from .models import AthleteDetails
+from .models import AthleteDetails, PersonalBest
 from .parsers import parse_personal_bests, parse_times_table
 from .utils import parse_profile_info, is_valid_time
 from .exceptions import NetworkError, ParseError
@@ -158,10 +158,10 @@ class Athlete:
         """Backwards compatibility wrapper for is_valid_time utility function."""
         return is_valid_time(time_str)
 
-    def _parse_times_table(self, table):
+    def _parse_times_table(self, table: Tag) -> List[PersonalBest]:
         """Backwards compatibility wrapper for parse_times_table function."""
         return parse_times_table(table)
 
-    def _parse_profile_info(self, soup):
+    def _parse_profile_info(self, soup: BeautifulSoup) -> Dict[str, Any]:
         """Backwards compatibility wrapper for parse_profile_info function."""
         return parse_profile_info(soup)

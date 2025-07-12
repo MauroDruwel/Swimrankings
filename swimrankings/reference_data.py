@@ -7,7 +7,7 @@ including country codes and time period selections.
 
 from typing import Dict, List, Tuple, Optional
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 import re
 from .exceptions import NetworkError, ParseError
 
@@ -93,7 +93,7 @@ def _parse_countries(html: str) -> Dict[str, Tuple[str, str]]:
     
     # Find the nation select dropdown
     nation_select = soup.find("select", {"name": "nationId"})
-    if not nation_select:
+    if not nation_select or not isinstance(nation_select, Tag):
         raise ParseError("Could not find nation select dropdown")
     
     options = nation_select.find_all("option")
@@ -132,7 +132,7 @@ def _parse_time_periods(html: str) -> Dict[str, str]:
     
     # Find the selectPage dropdown
     select_page = soup.find("select", {"name": "selectPage"})
-    if not select_page:
+    if not select_page or not isinstance(select_page, Tag):
         raise ParseError("Could not find selectPage dropdown")
     
     options = select_page.find_all("option")
@@ -286,7 +286,7 @@ def get_cached_time_periods() -> Dict[str, str]:
     return _time_periods_cache
 
 
-def clear_cache():
+def clear_cache() -> None:
     """Clear all cached reference data."""
     global _countries_cache, _time_periods_cache
     _countries_cache = None
