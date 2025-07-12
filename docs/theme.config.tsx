@@ -4,12 +4,9 @@ import { DocsThemeConfig } from 'nextra-theme-docs'
 const config: DocsThemeConfig = {
   logo: <span>🏊‍♀️ <strong>SwimRankings</strong></span>,
   project: {
-    link: 'https://github.com/yourusername/swimrankings',
+    link: 'https://github.com/MauroDruwel/swimrankings',
   },
-  chat: {
-    link: 'https://discord.gg/yourdiscord',
-  },
-  docsRepositoryBase: 'https://github.com/yourusername/swimrankings/tree/main/docs',
+  docsRepositoryBase: 'https://github.com/MauroDruwel/swimrankings/tree/main/docs',
   footer: {
     text: 'SwimRankings Python Library Documentation',
   },

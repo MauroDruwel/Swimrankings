@@ -104,8 +104,8 @@ Represents a single athlete with their information.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/swimrankings.git
-cd swimrankings
+git clone https://github.com/MauroDruwel/Swimrankings.git
+cd Swimrankings
 
 # Install development dependencies
 pip install -e ".[dev]"
