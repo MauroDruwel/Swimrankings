@@ -55,6 +55,7 @@ jobs:
   publish:
     needs: [build, test-publish]
     runs-on: ubuntu-latest
+    if: github.event.release.prerelease == false
     environment: 
       name: pypi
       url: https://pypi.org/p/swimrankings
