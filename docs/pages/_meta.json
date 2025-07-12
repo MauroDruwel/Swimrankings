@@ -1,0 +1,9 @@
+{
+  "index": "Introduction",
+  "installation": "Installation", 
+  "quick-start": "Quick Start",
+  "api": "API Reference",
+  "examples": "Examples",
+  "error-handling": "Error Handling",
+  "contributing": "Contributing"
+}

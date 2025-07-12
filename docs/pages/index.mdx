@@ -1,0 +1,65 @@
+# SwimRankings Python Library
+
+A modern Python library for interacting with [swimrankings.net](https://www.swimrankings.net), providing easy access to athlete data, search functionality, and more.
+
+## Features
+
+- 🏊‍♀️ **Athlete Search**: Search for athletes by name, gender, and other criteria
+- 🎯 **Modern API**: Clean, intuitive class-based interface
+- 📊 **Type Hints**: Full type annotation support for better IDE experience
+- 🔍 **Flexible Filtering**: Filter athletes by gender, country, club, etc.
+- 🚀 **Robust**: Comprehensive error handling and testing
+
+## Quick Start
+
+### Installation
+
+```bash
+pip install swimrankings
+```
+
+### Basic Usage
+
+```python
+from swimrankings import Athletes
+
+# Search for athletes by name
+athletes = Athletes(name="Druwel")
+for athlete in athletes:
+    print(f"{athlete.full_name} ({athlete.birth_year}) - {athlete.country}")
+
+# Search for male athletes only
+male_athletes = Athletes(name="Druwel", gender="male")
+
+# Search for female athletes only  
+female_athletes = Athletes(name="Druwel", gender="female")
+```
+
+## Getting Started
+
+import { Cards, Card } from 'nextra/components'
+
+<Cards>
+  <Card icon="📖" title="Installation" href="/installation" />
+  <Card icon="🚀" title="Quick Start" href="/quick-start" />
+  <Card icon="📚" title="API Reference" href="/api" />
+  <Card icon="💡" title="Examples" href="/examples" />
+</Cards>
+
+## Why SwimRankings?
+
+- **Easy to use**: Simple, intuitive API that just works
+- **Reliable**: Robust error handling and comprehensive testing
+- **Modern**: Built with modern Python practices and type hints
+- **Flexible**: Multiple ways to search and filter athlete data
+- **Well documented**: Comprehensive documentation and examples
+
+## Community
+
+import { Callout } from 'nextra/components'
+
+<Callout type="info" emoji="🏊‍♀️">
+  This library is developed for the swimming community. If you have suggestions or find issues, please contribute!
+</Callout>
+
+Ready to dive in? Check out the [installation guide](/installation) to get started!

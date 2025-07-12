@@ -1,0 +1,230 @@
+# Quick Start
+
+This guide will get you up and running with the SwimRankings library in minutes.
+
+## Basic Search
+
+The most common use case is searching for athletes by name:
+
+```python
+from swimrankings import Athletes
+
+# Search for athletes named "Druwel"
+athletes = Athletes(name="Druwel")
+
+# Print all found athletes
+for athlete in athletes:
+    print(f"{athlete.full_name} ({athlete.birth_year}) - {athlete.country}")
+    print(f"Club: {athlete.club}")
+    print(f"Profile: {athlete.profile_url}")
+    print()
+```
+
+Output:
+```
+DRUWEL, Mauro (2008) - BEL
+Club: BEL - TiMe Swimming Team
+Profile: https://www.swimrankings.net/index.php?page=athleteDetail&athleteId=5199475
+
+DRUWEL, Nora (2011) - BEL
+Club: BEL - TiMe Swimming Team
+Profile: https://www.swimrankings.net/index.php?page=athleteDetail&athleteId=5425825
+```
+
+## Getting Detailed Athlete Information
+
+Once you have an athlete, you can fetch detailed information including personal bests:
+
+```python
+from swimrankings import Athletes
+
+# Search for an athlete
+athletes = Athletes(name="Druwel")
+athlete = athletes[0]  # Get the first athlete
+
+# Fetch detailed information
+details = athlete.get_details()
+
+print(f"Details for {athlete.full_name}")
+print(f"Last updated: {details.last_updated}")
+
+# Display personal bests
+if details.personal_bests:
+    print("\nPersonal Bests:")
+    for pb in details.personal_bests:
+        print(f"  {pb.event} ({pb.course}): {pb.time}")
+        if pb.date:
+            print(f"    Date: {pb.date}")
+        if pb.meet:
+            print(f"    Meet: {pb.meet}")
+
+# Display profile information
+if details.profile_info:
+    print("\nProfile Information:")
+    for key, value in details.profile_info.items():
+        print(f"  {key.title()}: {value}")
+```
+
+## Gender-Specific Searches
+
+You can filter athletes by gender:
+
+```python
+from swimrankings import Athletes
+
+# Search for male athletes only
+male_athletes = Athletes(name="Smith", gender="male")
+print(f"Found {len(male_athletes)} male athletes")
+
+# Search for female athletes only
+female_athletes = Athletes(name="Smith", gender="female")
+print(f"Found {len(female_athletes)} female athletes")
+
+# Search all genders (default)
+all_athletes = Athletes(name="Smith", gender="all")
+print(f"Found {len(all_athletes)} total athletes")
+```
+
+## Working with Results
+
+The `Athletes` class provides multiple ways to work with search results:
+
+### Iteration
+
+```python
+athletes = Athletes(name="Johnson")
+
+# Iterate through all athletes
+for athlete in athletes:
+    print(athlete.full_name)
+```
+
+### Indexing
+
+```python
+athletes = Athletes(name="Johnson")
+
+if len(athletes) > 0:
+    # Get first athlete
+    first_athlete = athletes[0]
+    print(f"First: {first_athlete.full_name}")
+    
+    # Get last athlete
+    last_athlete = athletes[-1]
+    print(f"Last: {last_athlete.full_name}")
+    
+    # Get subset using slicing
+    first_three = athletes[0:3]
+    print(f"First 3: {[a.full_name for a in first_three]}")
+```
+
+### Length and Boolean
+
+```python
+athletes = Athletes(name="Johnson")
+
+# Check how many athletes found
+print(f"Found {len(athletes)} athletes")
+
+# Check if any athletes found
+if athletes:
+    print("Athletes found!")
+else:
+    print("No athletes found")
+```
+
+## Filtering Results
+
+Apply additional filters to your search results:
+
+```python
+athletes = Athletes(name="Miller")
+
+# Filter by country
+usa_athletes = athletes.filter_by_country("USA")
+print(f"USA athletes: {len(usa_athletes)}")
+
+# Filter by birth year range
+young_athletes = athletes.filter_by_birth_year(2005, 2015)
+print(f"Born 2005-2015: {len(young_athletes)}")
+
+# Filter by single birth year
+born_2008 = athletes.filter_by_birth_year(2008)
+print(f"Born in 2008: {len(born_2008)}")
+
+# Filter by gender (post-search)
+male_athletes = athletes.filter_by_gender("male")
+print(f"Male athletes: {len(male_athletes)}")
+```
+
+## Accessing Athlete Data
+
+Each athlete object provides detailed information:
+
+```python
+athletes = Athletes(name="Druwel")
+athlete = athletes[0]  # Get first athlete
+
+# Basic information
+print(f"ID: {athlete.athlete_id}")
+print(f"Full name: {athlete.full_name}")
+print(f"First name: {athlete.first_name}")
+print(f"Last name: {athlete.last_name}")
+
+# Details
+print(f"Birth year: {athlete.birth_year}")
+print(f"Gender: {athlete.gender}")
+print(f"Country: {athlete.country}")
+print(f"Club: {athlete.club}")
+print(f"Profile URL: {athlete.profile_url}")
+```
+
+## Error Handling
+
+Always handle potential errors when working with external data:
+
+```python
+from swimrankings import Athletes, AthleteNotFoundError, NetworkError
+
+try:
+    athletes = Athletes(name="NonexistentName")
+    print(f"Found {len(athletes)} athletes")
+    
+except AthleteNotFoundError:
+    print("No athletes found with that name")
+    
+except NetworkError as e:
+    print(f"Network error: {e}")
+    print("Please check your internet connection")
+    
+except Exception as e:
+    print(f"Unexpected error: {e}")
+```
+
+## Data Export
+
+Convert athlete data to other formats:
+
+```python
+athletes = Athletes(name="Smith")
+
+# Convert to list of dictionaries
+athletes_dict = athletes.to_dict()
+print(f"Exported {len(athletes_dict)} athletes")
+
+# Example: save to JSON
+import json
+with open("athletes.json", "w") as f:
+    json.dump(athletes_dict, f, indent=2)
+
+# Example: create DataFrame (requires pandas)
+import pandas as pd
+df = pd.DataFrame(athletes_dict)
+print(df.head())
+```
+
+## Next Steps
+
+- Explore the [API Reference](/api) for detailed documentation
+- Check out [Examples](/examples) for more advanced use cases
+- Learn about [Error Handling](/error-handling) best practices

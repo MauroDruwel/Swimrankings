@@ -1,0 +1,410 @@
+# Error Handling
+
+Learn how to handle errors gracefully when working with the SwimRankings library.
+
+## Exception Hierarchy
+
+The SwimRankings library provides a clear hierarchy of exceptions:
+
+```
+SwimRankingsError (base exception)
+├── NetworkError
+├── AthleteNotFoundError
+├── InvalidGenderError
+└── ParseError
+```
+
+## Common Exceptions
+
+### AthleteNotFoundError
+
+Raised when no athletes are found for the given search criteria.
+
+```python
+from swimrankings import Athletes, AthleteNotFoundError
+
+try:
+    athletes = Athletes(name="NonexistentName")
+except AthleteNotFoundError as e:
+    print(f"No athletes found: {e}")
+```
+
+**Common causes:**
+- Misspelled athlete name
+- Very uncommon name
+- Restrictive gender filter
+
+### NetworkError
+
+Raised when there's a network-related issue.
+
+```python
+from swimrankings import Athletes, NetworkError
+
+try:
+    athletes = Athletes(name="Smith")
+except NetworkError as e:
+    print(f"Network error: {e}")
+    print("Please check your internet connection")
+```
+
+**Common causes:**
+- No internet connection
+- Server is temporarily down
+- Request timeout
+- DNS resolution failure
+- Firewall blocking requests
+
+### InvalidGenderError
+
+Raised when an invalid gender value is provided.
+
+```python
+from swimrankings import Athletes, InvalidGenderError
+
+try:
+    athletes = Athletes(name="Smith", gender="invalid")
+except InvalidGenderError as e:
+    print(f"Invalid gender: {e}")
+```
+
+**Valid gender values:** `"all"`, `"male"`, `"female"`
+
+### ParseError
+
+Raised when the HTML response cannot be parsed properly.
+
+```python
+from swimrankings import Athletes, ParseError
+
+try:
+    athletes = Athletes(name="Smith")
+except ParseError as e:
+    print(f"Parse error: {e}")
+    print("The website might have changed its format")
+```
+
+**Common causes:**
+- Website structure changes
+- Unexpected HTML format
+- Corrupted response data
+
+## Best Practices
+
+### Comprehensive Error Handling
+
+Always handle the most specific exceptions first:
+
+```python
+from swimrankings import (
+    Athletes,
+    AthleteNotFoundError,
+    NetworkError,
+    InvalidGenderError,
+    ParseError,
+    SwimRankingsError
+)
+
+def search_athletes_safely(name, gender="all"):
+    try:
+        athletes = Athletes(name=name, gender=gender)
+        return list(athletes)
+        
+    except InvalidGenderError as e:
+        print(f"❌ Invalid gender parameter: {e}")
+        return []
+        
+    except AthleteNotFoundError:
+        print(f"🔍 No athletes found for '{name}' with gender '{gender}'")
+        return []
+        
+    except NetworkError as e:
+        print(f"🌐 Network error: {e}")
+        print("Please check your internet connection and try again.")
+        return []
+        
+    except ParseError as e:
+        print(f"⚠️ Parse error: {e}")
+        print("The website format might have changed.")
+        return []
+        
+    except SwimRankingsError as e:
+        print(f"❌ SwimRankings error: {e}")
+        return []
+        
+    except Exception as e:
+        print(f"💥 Unexpected error: {e}")
+        return []
+
+# Usage
+athletes = search_athletes_safely("Smith", "male")
+if athletes:
+    print(f"✅ Found {len(athletes)} athletes")
+```
+
+### Retry Logic for Network Errors
+
+Implement retry logic for transient network issues:
+
+```python
+import time
+from swimrankings import Athletes, NetworkError
+
+def search_with_retry(name, max_retries=3, base_delay=1):
+    """Search with exponential backoff retry."""
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            athletes = Athletes(name=name)
+            return list(athletes)
+            
+        except NetworkError as e:
+            last_error = e
+            if attempt == max_retries - 1:
+                break
+                
+            delay = base_delay * (2 ** attempt)  # Exponential backoff
+            print(f"Network error (attempt {attempt + 1}/{max_retries}): {e}")
+            print(f"Retrying in {delay} seconds...")
+            time.sleep(delay)
+    
+    raise NetworkError(f"Failed after {max_retries} attempts. Last error: {last_error}")
+
+# Usage
+try:
+    athletes = search_with_retry("Smith")
+    print(f"Success! Found {len(athletes)} athletes")
+except NetworkError as e:
+    print(f"Failed to search: {e}")
+```
+
+### Timeout Configuration
+
+Configure timeouts based on your needs:
+
+```python
+from swimrankings import Athletes, NetworkError
+
+# Short timeout for quick checks
+try:
+    athletes = Athletes(name="Smith", timeout=5)
+except NetworkError:
+    print("Quick search failed, trying with longer timeout...")
+    
+    # Longer timeout for slower connections
+    try:
+        athletes = Athletes(name="Smith", timeout=30)
+    except NetworkError:
+        print("Search failed even with extended timeout")
+```
+
+### Graceful Degradation
+
+Handle partial failures gracefully:
+
+```python
+from swimrankings import Athletes, AthleteNotFoundError, NetworkError
+
+def search_multiple_names(names):
+    """Search for multiple names, handling failures gracefully."""
+    results = {}
+    
+    for name in names:
+        try:
+            athletes = Athletes(name=name)
+            results[name] = list(athletes)
+            print(f"✅ {name}: {len(athletes)} athletes")
+            
+        except AthleteNotFoundError:
+            results[name] = []
+            print(f"🔍 {name}: No athletes found")
+            
+        except NetworkError as e:
+            results[name] = None
+            print(f"🌐 {name}: Network error - {e}")
+            
+        except Exception as e:
+            results[name] = None
+            print(f"❌ {name}: Unexpected error - {e}")
+    
+    return results
+
+# Usage
+names = ["Smith", "Johnson", "Williams"]
+results = search_multiple_names(names)
+
+# Process results
+successful_searches = [name for name, athletes in results.items() if athletes is not None]
+print(f"Successful searches: {len(successful_searches)}")
+```
+
+## Logging Errors
+
+Use Python's logging module for better error tracking:
+
+```python
+import logging
+from swimrankings import Athletes, SwimRankingsError
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('swimrankings.log'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+def search_with_logging(name, gender="all"):
+    """Search with comprehensive logging."""
+    logger.info(f"Starting search for '{name}' with gender '{gender}'")
+    
+    try:
+        athletes = Athletes(name=name, gender=gender)
+        athlete_list = list(athletes)
+        logger.info(f"Search successful: found {len(athlete_list)} athletes")
+        return athlete_list
+        
+    except SwimRankingsError as e:
+        logger.error(f"SwimRankings error during search: {e}")
+        return []
+        
+    except Exception as e:
+        logger.exception(f"Unexpected error during search: {e}")
+        return []
+
+# Usage
+athletes = search_with_logging("Smith", "male")
+```
+
+## Testing Error Conditions
+
+When writing tests, you can simulate error conditions:
+
+```python
+import pytest
+from unittest.mock import patch
+from swimrankings import Athletes, NetworkError
+
+def test_network_error_handling():
+    """Test that network errors are handled properly."""
+    with patch('swimrankings.athletes.requests.get') as mock_get:
+        mock_get.side_effect = Exception("Network error")
+        
+        with pytest.raises(NetworkError):
+            Athletes(name="Test")
+
+def test_invalid_gender():
+    """Test invalid gender parameter."""
+    with pytest.raises(InvalidGenderError):
+        Athletes(name="Test", gender="invalid")
+```
+
+## Debugging Tips
+
+### Enable Verbose Error Messages
+
+```python
+import requests
+from swimrankings import Athletes
+
+# Enable requests logging for debugging
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+try:
+    athletes = Athletes(name="Test")
+except Exception as e:
+    print(f"Error details: {e}")
+    print(f"Error type: {type(e)}")
+```
+
+### Check Response Content
+
+For debugging parse errors:
+
+```python
+import requests
+from bs4 import BeautifulSoup
+
+# Manual request to debug
+url = "https://www.swimrankings.net/index.php"
+params = {
+    'internalRequest': 'athleteFind',
+    'athlete_clubId': -1,
+    'athlete_gender': -1,
+    'athlete_lastname': 'TestName',
+    'athlete_firstname': ''
+}
+
+response = requests.get(url, params=params)
+print(f"Status code: {response.status_code}")
+print(f"Response length: {len(response.text)}")
+print(f"First 500 chars: {response.text[:500]}")
+
+# Check if table exists
+soup = BeautifulSoup(response.text, 'lxml')
+table = soup.find('table', class_='athleteSearch')
+print(f"Table found: {table is not None}")
+```
+
+## Recovery Strategies
+
+### Fallback to Different Parameters
+
+```python
+from swimrankings import Athletes, AthleteNotFoundError
+
+def flexible_search(name):
+    """Try different search strategies."""
+    strategies = [
+        {"gender": "all"},
+        {"gender": "male"},
+        {"gender": "female"},
+    ]
+    
+    for strategy in strategies:
+        try:
+            athletes = Athletes(name=name, **strategy)
+            print(f"Found {len(athletes)} athletes with strategy: {strategy}")
+            return list(athletes)
+        except AthleteNotFoundError:
+            continue
+    
+    print(f"No athletes found for '{name}' with any strategy")
+    return []
+```
+
+### Partial Name Matching
+
+```python
+from swimrankings import Athletes, AthleteNotFoundError
+
+def smart_search(full_name):
+    """Try searching with different parts of the name."""
+    name_parts = full_name.split()
+    
+    for part in name_parts:
+        if len(part) >= 3:  # Only try meaningful parts
+            try:
+                athletes = Athletes(name=part)
+                # Filter results to match the original search intent
+                matching = [
+                    athlete for athlete in athletes
+                    if any(name_part.lower() in athlete.full_name.lower() 
+                          for name_part in name_parts)
+                ]
+                if matching:
+                    return matching
+            except AthleteNotFoundError:
+                continue
+    
+    return []
+
+# Usage
+athletes = smart_search("John Smith")
+```

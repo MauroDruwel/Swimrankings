@@ -1,0 +1,103 @@
+# Installation
+
+## Requirements
+
+- Python 3.8 or higher
+- Internet connection for accessing swimrankings.net
+
+## Install from PyPI
+
+```bash
+pip install swimrankings
+```
+
+## Install from Source
+
+If you want to install the latest development version:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/swimrankings.git
+cd swimrankings
+
+# Install in development mode
+pip install -e .
+```
+
+## Development Installation
+
+For development work, install with development dependencies:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/swimrankings.git
+cd swimrankings
+
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Install in development mode
+pip install -e .
+```
+
+## Verify Installation
+
+To verify that the installation was successful, try importing the library:
+
+```python
+from swimrankings import Athletes
+
+# Test with a simple search
+try:
+    athletes = Athletes(name="Test")
+    print("✅ SwimRankings library installed successfully!")
+except Exception as e:
+    print(f"❌ Installation issue: {e}")
+```
+
+## Dependencies
+
+The library requires the following packages:
+
+- **requests**: For HTTP requests to swimrankings.net
+- **beautifulsoup4**: For HTML parsing
+- **lxml**: Fast XML/HTML parser
+
+These are automatically installed when you install the library.
+
+## Troubleshooting
+
+### Import Errors
+
+If you get import errors, make sure you've installed the library correctly:
+
+```bash
+pip show swimrankings
+```
+
+### Network Issues
+
+The library requires internet access to fetch data from swimrankings.net. If you're behind a corporate firewall, you may need to configure proxy settings:
+
+```python
+import requests
+
+# Configure proxy if needed
+proxies = {
+    'http': 'http://your-proxy:port',
+    'https': 'https://your-proxy:port'
+}
+
+# The library doesn't currently support proxy configuration directly
+# You may need to set environment variables
+```
+
+### Python Version Issues
+
+Make sure you're using Python 3.8 or higher:
+
+```bash
+python --version
+```
+
+If you have multiple Python versions installed, you might need to use `python3` or `pip3` instead.

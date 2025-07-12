@@ -1,0 +1,415 @@
+# Examples
+
+Comprehensive examples showing how to use the SwimRankings library for various tasks.
+
+## Basic Examples
+
+### Simple Search
+
+```python
+from swimrankings import Athletes
+
+# Search for athletes by last name
+athletes = Athletes(name="Smith")
+
+print(f"Found {len(athletes)} athletes named Smith:")
+for athlete in athletes:
+    print(f"- {athlete.full_name} ({athlete.birth_year}) from {athlete.country}")
+```
+
+### Getting Athlete Details
+
+```python
+from swimrankings import Athletes
+
+# Search for an athlete and get detailed information
+athletes = Athletes(name="Druwel")
+athlete = athletes[0]
+
+# Get detailed information including personal bests
+details = athlete.get_details()
+
+print(f"Athlete: {athlete.full_name}")
+print(f"Details last updated: {details.last_updated}")
+print(f"Personal bests found: {len(details.personal_bests)}")
+
+# Display personal bests
+for pb in details.personal_bests:
+    print(f"\n{pb.event} ({pb.course})")
+    print(f"  Time: {pb.time}")
+    if pb.date:
+        print(f"  Date: {pb.date}")
+    if pb.meet:
+        print(f"  Meet: {pb.meet}")
+    if pb.location:
+        print(f"  Location: {pb.location}")
+
+# Display additional profile information
+if details.profile_info:
+    print("\nProfile Information:")
+    for key, value in details.profile_info.items():
+        print(f"  {key.title()}: {value}")
+```
+
+### Gender-Specific Search
+
+```python
+from swimrankings import Athletes
+
+# Search for male athletes only
+male_swimmers = Athletes(name="Johnson", gender="male")
+print(f"Male swimmers: {len(male_swimmers)}")
+
+# Search for female athletes only
+female_swimmers = Athletes(name="Johnson", gender="female")
+print(f"Female swimmers: {len(female_swimmers)}")
+```
+
+## Filtering Examples
+
+### Filter by Country
+
+```python
+from swimrankings import Athletes
+
+# Get all athletes named "Miller"
+athletes = Athletes(name="Miller")
+
+# Filter by specific countries
+usa_athletes = athletes.filter_by_country("USA")
+can_athletes = athletes.filter_by_country("CAN")
+gbr_athletes = athletes.filter_by_country("GBR")
+
+print(f"USA: {len(usa_athletes)}")
+print(f"Canada: {len(can_athletes)}")
+print(f"Great Britain: {len(gbr_athletes)}")
+```
+
+### Filter by Age/Birth Year
+
+```python
+from swimrankings import Athletes
+
+athletes = Athletes(name="Wilson")
+
+# Filter by single birth year
+born_2008 = athletes.filter_by_birth_year(2008)
+print(f"Born in 2008: {len(born_2008)}")
+
+# Filter by age range
+young_swimmers = athletes.filter_by_birth_year(2005, 2015)
+veteran_swimmers = athletes.filter_by_birth_year(1980, 1999)
+
+print(f"Young swimmers (2005-2015): {len(young_swimmers)}")
+print(f"Veteran swimmers (1980-1999): {len(veteran_swimmers)}")
+```
+
+### Combined Filtering
+
+```python
+from swimrankings import Athletes
+
+# Start with a broad search
+athletes = Athletes(name="Brown")
+
+# Apply multiple filters
+usa_athletes = athletes.filter_by_country("USA")
+young_usa_swimmers = [
+    athlete for athlete in usa_athletes 
+    if athlete.birth_year >= 2005
+]
+young_usa_males = [
+    athlete for athlete in young_usa_swimmers
+    if athlete.gender == "male"
+]
+
+print(f"Young USA male swimmers named Brown: {len(young_usa_males)}")
+for athlete in young_usa_males:
+    print(f"- {athlete.full_name} ({athlete.birth_year})")
+```
+
+## Data Analysis Examples
+
+### Country Distribution
+
+```python
+from swimrankings import Athletes
+from collections import Counter
+
+# Search for a common name
+athletes = Athletes(name="Anderson")
+
+# Count athletes by country
+countries = [athlete.country for athlete in athletes]
+country_counts = Counter(countries)
+
+print("Athletes by country:")
+for country, count in country_counts.most_common():
+    print(f"{country}: {count}")
+```
+
+### Age Distribution
+
+```python
+from swimrankings import Athletes
+from collections import Counter
+
+athletes = Athletes(name="Taylor")
+
+# Group by decade
+birth_decades = []
+for athlete in athletes:
+    decade = (athlete.birth_year // 10) * 10
+    birth_decades.append(f"{decade}s")
+
+decade_counts = Counter(birth_decades)
+
+print("Athletes by birth decade:")
+for decade, count in sorted(decade_counts.items()):
+    print(f"{decade}: {count}")
+```
+
+### Club Analysis
+
+```python
+from swimrankings import Athletes
+import re
+
+athletes = Athletes(name="Davis")
+
+# Extract club names (remove country prefix)
+clubs = []
+for athlete in athletes:
+    # Remove country prefix like "USA - " or "BEL - "
+    club_name = re.sub(r'^[A-Z]{2,3} - ', '', athlete.club)
+    clubs.append(club_name)
+
+# Find most common clubs
+from collections import Counter
+club_counts = Counter(clubs)
+
+print("Most represented clubs:")
+for club, count in club_counts.most_common(5):
+    print(f"{club}: {count}")
+```
+
+## Data Export Examples
+
+### Export to JSON
+
+```python
+import json
+from swimrankings import Athletes
+
+# Search for athletes
+athletes = Athletes(name="Roberts")
+
+# Convert to dictionary format
+athletes_data = athletes.to_dict()
+
+# Save to JSON file
+with open("athletes.json", "w", encoding="utf-8") as f:
+    json.dump(athletes_data, f, indent=2, ensure_ascii=False)
+
+print(f"Exported {len(athletes_data)} athletes to athletes.json")
+```
+
+### Export to CSV
+
+```python
+import csv
+from swimrankings import Athletes
+
+athletes = Athletes(name="Thompson")
+athletes_data = athletes.to_dict()
+
+# Write to CSV
+with open("athletes.csv", "w", newline="", encoding="utf-8") as f:
+    if athletes_data:
+        fieldnames = athletes_data[0].keys()
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        writer.writerows(athletes_data)
+
+print(f"Exported {len(athletes_data)} athletes to athletes.csv")
+```
+
+### Export to Pandas DataFrame
+
+```python
+import pandas as pd
+from swimrankings import Athletes
+
+# Search and convert to DataFrame
+athletes = Athletes(name="Williams")
+athletes_data = athletes.to_dict()
+df = pd.DataFrame(athletes_data)
+
+# Basic analysis
+print("Dataset shape:", df.shape)
+print("\nCountry distribution:")
+print(df['country'].value_counts())
+
+print("\nBirth year statistics:")
+print(df['birth_year'].describe())
+
+# Save to Excel
+df.to_excel("athletes.xlsx", index=False)
+print("Exported to athletes.xlsx")
+```
+
+## Advanced Examples
+
+### Batch Processing
+
+```python
+from swimrankings import Athletes, AthleteNotFoundError
+import time
+
+# List of names to search
+names = ["Smith", "Johnson", "Williams", "Brown", "Jones"]
+all_athletes = []
+
+for name in names:
+    try:
+        print(f"Searching for {name}...")
+        athletes = Athletes(name=name)
+        all_athletes.extend(list(athletes))
+        print(f"Found {len(athletes)} athletes")
+        
+        # Be respectful to the server
+        time.sleep(1)
+        
+    except AthleteNotFoundError:
+        print(f"No athletes found for {name}")
+    except Exception as e:
+        print(f"Error searching for {name}: {e}")
+
+print(f"\nTotal athletes collected: {len(all_athletes)}")
+
+# Remove duplicates (athletes found in multiple searches)
+unique_athletes = list(set(all_athletes))
+print(f"Unique athletes: {len(unique_athletes)}")
+```
+
+### Statistical Analysis
+
+```python
+from swimrankings import Athletes
+import statistics
+
+# Collect data from multiple searches
+all_athletes = []
+for name in ["Miller", "Wilson", "Moore", "Taylor"]:
+    try:
+        athletes = Athletes(name=name)
+        all_athletes.extend(list(athletes))
+    except:
+        continue
+
+# Analyze birth years
+birth_years = [athlete.birth_year for athlete in all_athletes]
+
+print("Birth year statistics:")
+print(f"Mean: {statistics.mean(birth_years):.1f}")
+print(f"Median: {statistics.median(birth_years)}")
+print(f"Mode: {statistics.mode(birth_years)}")
+print(f"Range: {min(birth_years)} - {max(birth_years)}")
+
+# Gender distribution
+male_count = sum(1 for athlete in all_athletes if athlete.gender == "male")
+female_count = sum(1 for athlete in all_athletes if athlete.gender == "female")
+
+print(f"\nGender distribution:")
+print(f"Male: {male_count} ({male_count/len(all_athletes)*100:.1f}%)")
+print(f"Female: {female_count} ({female_count/len(all_athletes)*100:.1f}%)")
+```
+
+### Profile URL Analysis
+
+```python
+from swimrankings import Athletes
+import webbrowser
+
+# Find young talents (born after 2010)
+athletes = Athletes(name="Garcia")
+young_talents = athletes.filter_by_birth_year(2010, 2025)
+
+print(f"Found {len(young_talents)} young talents:")
+for athlete in young_talents:
+    print(f"{athlete.full_name} ({athlete.birth_year}) - {athlete.country}")
+    print(f"Profile: {athlete.profile_url}")
+    
+    # Optionally open profile in browser
+    # webbrowser.open(athlete.profile_url)
+```
+
+## Error Handling Examples
+
+### Comprehensive Error Handling
+
+```python
+from swimrankings import (
+    Athletes, 
+    AthleteNotFoundError, 
+    NetworkError, 
+    InvalidGenderError
+)
+
+def safe_athlete_search(name, gender="all"):
+    """Safely search for athletes with comprehensive error handling."""
+    try:
+        athletes = Athletes(name=name, gender=gender)
+        return list(athletes)
+        
+    except InvalidGenderError as e:
+        print(f"Invalid gender parameter: {e}")
+        return []
+        
+    except AthleteNotFoundError:
+        print(f"No athletes found for '{name}' with gender '{gender}'")
+        return []
+        
+    except NetworkError as e:
+        print(f"Network error: {e}")
+        print("Please check your internet connection and try again.")
+        return []
+        
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return []
+
+# Usage
+athletes = safe_athlete_search("TestName", "male")
+print(f"Found {len(athletes)} athletes")
+```
+
+### Retry Logic
+
+```python
+from swimrankings import Athletes, NetworkError
+import time
+
+def search_with_retry(name, max_retries=3, delay=1):
+    """Search with automatic retry on network errors."""
+    for attempt in range(max_retries):
+        try:
+            athletes = Athletes(name=name)
+            return list(athletes)
+            
+        except NetworkError as e:
+            if attempt == max_retries - 1:
+                raise e
+            print(f"Network error (attempt {attempt + 1}): {e}")
+            print(f"Retrying in {delay} seconds...")
+            time.sleep(delay)
+            delay *= 2  # Exponential backoff
+
+# Usage
+try:
+    athletes = search_with_retry("TestName")
+    print(f"Found {len(athletes)} athletes")
+except NetworkError:
+    print("Failed to search after multiple retries")
+```

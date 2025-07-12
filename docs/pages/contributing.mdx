@@ -1,0 +1,356 @@
+# Contributing
+
+We welcome contributions to the SwimRankings library! This guide will help you get started.
+
+## Development Setup
+
+### Prerequisites
+
+- Python 3.8 or higher
+- Git
+- Node.js 16+ (for documentation)
+
+### Setting Up the Development Environment
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/swimrankings.git
+   cd swimrankings
+   ```
+
+2. **Install development dependencies**
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+3. **Install the package in development mode**
+   ```bash
+   pip install -e .
+   ```
+
+4. **Verify the installation**
+   ```bash
+   python -c "from swimrankings import Athletes; print('✅ Installation successful')"
+   ```
+
+## Development Workflow
+
+### Running Tests
+
+```bash
+# Run all tests
+python -m pytest tests/ -v
+
+# Run tests with coverage
+python -m pytest tests/ -v --cov=swimrankings --cov-report=html
+
+# Run specific test file
+python -m pytest tests/test_athletes.py -v
+```
+
+### Code Quality
+
+```bash
+# Format code with black
+python -m black swimrankings/ tests/ example.py
+
+# Lint with flake8
+python -m flake8 swimrankings/ tests/ example.py
+
+# Type checking with mypy
+python -m mypy swimrankings/ --ignore-missing-imports
+```
+
+### Development Script
+
+Use the included development script for common tasks:
+
+```bash
+# Set up development environment
+python dev.py setup
+
+# Run all quality checks
+python dev.py all
+
+# Individual commands
+python dev.py format    # Format code
+python dev.py lint      # Lint code
+python dev.py typecheck # Type checking
+python dev.py test      # Run tests
+python dev.py example   # Run example
+```
+
+## Contributing Guidelines
+
+### Code Style
+
+- **Black**: We use Black for code formatting with 88-character line length
+- **Type Hints**: All public functions should have type hints
+- **Docstrings**: Use Google-style docstrings for all public methods
+- **Imports**: Follow PEP 8 import ordering
+
+Example:
+
+```python
+from typing import List, Optional
+
+def search_athletes(name: str, gender: Optional[str] = None) -> List[Athlete]:
+    """
+    Search for athletes by name and optional gender.
+    
+    Args:
+        name: The athlete's last name to search for
+        gender: Optional gender filter ("male", "female", or None for all)
+        
+    Returns:
+        List of matching Athlete objects
+        
+    Raises:
+        AthleteNotFoundError: If no athletes are found
+        NetworkError: If there's a network issue
+    """
+    # Implementation here
+    pass
+```
+
+### Testing
+
+- **Coverage**: Maintain >80% test coverage
+- **Test Types**: Include unit tests, integration tests, and error condition tests
+- **Mocking**: Use mocks for external API calls in unit tests
+- **Naming**: Use descriptive test names like `test_invalid_gender_raises_error`
+
+Example test:
+
+```python
+def test_athlete_search_by_name():
+    """Test that athlete search by name returns expected results."""
+    with patch('swimrankings.athletes.requests.get') as mock_get:
+        mock_response = Mock()
+        mock_response.text = mock_html_response
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+        
+        athletes = Athletes(name="TestName")
+        
+        assert len(athletes) == 1
+        assert athletes[0].full_name == "TESTNAME, John"
+```
+
+### Documentation
+
+- **Docstrings**: Document all public APIs
+- **Type Hints**: Use for better IDE support
+- **Examples**: Include usage examples in docstrings
+- **README**: Keep the README up to date with new features
+
+## Types of Contributions
+
+### Bug Reports
+
+When reporting bugs, please include:
+
+1. **Python version** and operating system
+2. **Library version** (`pip show swimrankings`)
+3. **Minimal example** that reproduces the issue
+4. **Expected behavior** vs actual behavior
+5. **Error messages** (full traceback)
+6. **Network conditions** (if relevant)
+
+Example bug report:
+
+```markdown
+## Bug Report
+
+**Environment:**
+- Python 3.9.0
+- swimrankings 0.1.0
+- Windows 10
+
+**Description:**
+Athletes search fails with ParseError for certain names.
+
+**Minimal Example:**
+```python
+from swimrankings import Athletes
+athletes = Athletes(name="TestName")  # Fails
+```
+
+**Error:**
+```
+ParseError: Failed to parse response: ...
+```
+
+**Expected:** Should return athlete results or AthleteNotFoundError
+```
+
+### Feature Requests
+
+For new features, please provide:
+
+1. **Use case**: Why is this feature needed?
+2. **Proposed API**: How should it work?
+3. **Examples**: Show usage examples
+4. **Backward compatibility**: Will it break existing code?
+
+### Pull Requests
+
+1. **Fork** the repository
+2. **Create a feature branch**: `git checkout -b feature/new-feature`
+3. **Make your changes** with tests
+4. **Run the test suite**: `python dev.py all`
+5. **Update documentation** if needed
+6. **Commit your changes**: Use clear, descriptive commit messages
+7. **Push to your fork**: `git push origin feature/new-feature`
+8. **Create a pull request**
+
+#### Pull Request Checklist
+
+- [ ] Tests pass (`python dev.py test`)
+- [ ] Code is formatted (`python dev.py format`)
+- [ ] Code is linted (`python dev.py lint`)
+- [ ] Type checking passes (`python dev.py typecheck`)
+- [ ] Documentation is updated
+- [ ] CHANGELOG.md is updated (if applicable)
+- [ ] Backward compatibility is maintained
+
+## Areas for Contribution
+
+### High-Priority Areas
+
+1. **Additional Search Parameters**
+   - Club-specific searches
+   - Country-specific searches
+   - Date range filtering
+
+2. **Performance Improvements**
+   - Request caching
+   - Async support
+   - Batch processing
+
+3. **Data Export Features**
+   - CSV export utilities
+   - JSON schemas
+   - Database integration helpers
+
+4. **Error Handling**
+   - Better error messages
+   - Retry mechanisms
+   - Rate limiting
+
+### Documentation Improvements
+
+1. **More Examples**
+   - Real-world use cases
+   - Data analysis examples
+   - Integration with popular libraries
+
+2. **Tutorials**
+   - Getting started guide
+   - Advanced usage patterns
+   - Best practices
+
+3. **API Documentation**
+   - Complete parameter descriptions
+   - Return value documentation
+   - Exception handling examples
+
+### Testing Improvements
+
+1. **Integration Tests**
+   - Real API testing (with rate limiting)
+   - End-to-end workflows
+   - Performance benchmarks
+
+2. **Error Condition Testing**
+   - Network failure scenarios
+   - Malformed response handling
+   - Edge cases
+
+## Release Process
+
+1. **Update version** in `setup.py` and `pyproject.toml`
+2. **Update CHANGELOG.md** with new features and fixes
+3. **Run full test suite** on multiple Python versions
+4. **Create release tag**: `git tag v0.2.0`
+5. **Build package**: `python -m build`
+6. **Upload to PyPI**: `twine upload dist/*`
+
+## Community Guidelines
+
+### Code of Conduct
+
+- Be respectful and inclusive
+- Focus on constructive feedback
+- Help others learn and grow
+- Celebrate diverse perspectives
+
+### Communication
+
+- **GitHub Issues**: For bug reports and feature requests
+- **Pull Requests**: For code contributions
+- **Discussions**: For questions and general discussion
+
+### Recognition
+
+Contributors will be recognized in:
+- README.md contributors section
+- CHANGELOG.md for significant contributions
+- GitHub releases notes
+
+## Getting Help
+
+If you need help with development:
+
+1. **Check existing issues** for similar problems
+2. **Read the documentation** thoroughly
+3. **Ask in GitHub Discussions** for general questions
+4. **Create an issue** for specific problems
+
+## Development Tips
+
+### Debugging
+
+```python
+# Enable debug logging
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Test with real API (use sparingly)
+from swimrankings import Athletes
+athletes = Athletes(name="TestName")
+```
+
+### Testing Locally
+
+```python
+# Quick local test
+python example.py
+
+# Test specific functionality
+python -c "
+from swimrankings import Athletes
+athletes = Athletes(name='Smith')
+print(f'Found {len(athletes)} athletes')
+"
+```
+
+### IDE Setup
+
+For VS Code, use these extensions:
+- Python
+- Pylance
+- Python Docstring Generator
+- GitLens
+
+Recommended settings.json:
+```json
+{
+    "python.formatting.provider": "black",
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.testing.pytestEnabled": true
+}
+```
+
+Thank you for contributing to SwimRankings! 🏊‍♀️
