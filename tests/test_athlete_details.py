@@ -97,7 +97,7 @@ class TestAthleteDetailsMethod:
         assert not athlete._is_valid_time("24")
         assert not athlete._is_valid_time("24.5")
 
-    @patch('swimrankings.athletes.requests.get')
+    @patch('swimrankings.athlete.requests.get')
     def test_get_details_success(self, mock_get, athlete):
         """Test successful athlete details retrieval."""
         # Mock HTML response
@@ -133,7 +133,7 @@ class TestAthleteDetailsMethod:
         assert args[0] == athlete.profile_url
         assert kwargs['timeout'] == 30
 
-    @patch('swimrankings.athletes.requests.get')
+    @patch('swimrankings.athlete.requests.get')
     def test_get_details_network_error(self, mock_get, athlete):
         """Test network error handling."""
         from requests.exceptions import RequestException
@@ -145,7 +145,7 @@ class TestAthleteDetailsMethod:
         
         assert "Failed to fetch athlete details" in str(exc_info.value)
 
-    @patch('swimrankings.athletes.requests.get')
+    @patch('swimrankings.athlete.requests.get')
     def test_get_details_parse_error(self, mock_get, athlete):
         """Test parse error handling."""
         mock_response = Mock()
@@ -154,7 +154,7 @@ class TestAthleteDetailsMethod:
         mock_get.return_value = mock_response
         
         # Mock BeautifulSoup to raise an exception during parsing
-        with patch('swimrankings.athletes.BeautifulSoup') as mock_soup:
+        with patch('swimrankings.athlete.BeautifulSoup') as mock_soup:
             mock_soup.side_effect = Exception("Parse error")
             
             with pytest.raises(ParseError):
@@ -229,7 +229,7 @@ class TestAthleteDetailsMethod:
 
     def test_custom_timeout(self, athlete):
         """Test custom timeout parameter."""
-        with patch('swimrankings.athletes.requests.get') as mock_get:
+        with patch('swimrankings.athlete.requests.get') as mock_get:
             mock_response = Mock()
             mock_response.text = "<html></html>"
             mock_response.raise_for_status.return_value = None

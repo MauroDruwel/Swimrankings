@@ -71,6 +71,41 @@ class TestAthlete:
         athlete2 = Athlete(2, "Madonna", 2000, "female", "ITA", "Club", "url")
         assert athlete2.first_name == ""
         assert athlete2.last_name == "Madonna"
+        
+    def test_athlete_repr(self):
+        """Test detailed string representation of Athlete."""
+        athlete = Athlete(
+            athlete_id=5199475,
+            full_name="DRUWEL, Mauro",
+            birth_year=2008,
+            gender="male",
+            country="BEL",
+            club="BEL - TiMe Swimming Team",
+            profile_url="https://example.com"
+        )
+        
+        repr_str = repr(athlete)
+        assert "Athlete(id=5199475" in repr_str
+        assert "name='DRUWEL, Mauro'" in repr_str
+        assert "birth_year=2008" in repr_str
+        assert "gender='male'" in repr_str
+        assert "country='BEL'" in repr_str
+        assert "club='BEL - TiMe Swimming Team'" in repr_str
+        
+    def test_athlete_hash(self):
+        """Test athlete hash based on ID."""
+        athlete1 = Athlete(1, "Test, One", 2000, "male", "USA", "Club A", "url1")
+        athlete2 = Athlete(1, "Test, Two", 2001, "female", "CAN", "Club B", "url2")
+        athlete3 = Athlete(2, "Test, One", 2000, "male", "USA", "Club A", "url1")
+        
+        # Same ID should have same hash
+        assert hash(athlete1) == hash(athlete2)
+        # Different ID should have different hash
+        assert hash(athlete1) != hash(athlete3)
+        
+        # Test that athletes can be used in sets
+        athlete_set = {athlete1, athlete2, athlete3}
+        assert len(athlete_set) == 2  # athlete1 and athlete2 are considered same due to same ID
 
 
 class TestAthletes:

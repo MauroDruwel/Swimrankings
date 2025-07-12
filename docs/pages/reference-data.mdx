@@ -1,0 +1,95 @@
+# Reference Data
+
+The SwimRankings library provides functions to fetch and work with reference data from swimrankings.net, including country codes and time period selections.
+
+## Countries and Nations
+
+The library can fetch all available countries/nations with their IDs, codes, and names:
+
+```python
+import swimrankings
+
+# Fetch all available countries
+countries = swimrankings.fetch_countries()
+print(f"Found {len(countries)} countries")
+
+# Get country information by nation ID
+country_name = swimrankings.get_country_name("43")  # Returns "Belgium"
+country_code = swimrankings.get_country_code("43")  # Returns "BEL"
+
+# Find nation ID by country code
+nation_id = swimrankings.find_nation_id_by_code("BEL")  # Returns "43"
+```
+
+## Time Periods and Month Codes
+
+You can also fetch time period codes used for filtering meets by date:
+
+```python
+import swimrankings
+
+# Fetch all available time periods
+periods = swimrankings.fetch_time_periods()
+print(f"Found {len(periods)} time periods")
+
+# Get available years
+years = swimrankings.get_available_years()
+print(f"Available years: {years[:5]}...")  # [2025, 2024, 2023, 2022, 2021]
+
+# Get months for a specific year
+months_2024 = swimrankings.get_months_for_year(2024)
+for code, name in months_2024.items():
+    print(f"{code}: {name}")
+    # Output: 2024_m12: 2024 - December, etc.
+```
+
+## Caching for Performance
+
+For better performance when making repeated calls, use the cached versions:
+
+```python
+import swimrankings
+
+# Use cached versions for better performance on repeated calls
+countries = swimrankings.get_cached_countries()
+periods = swimrankings.get_cached_time_periods()
+
+# Clear cache if needed (e.g., to refresh data)
+swimrankings.clear_cache()
+```
+
+## Available Functions
+
+### Country Functions
+- `fetch_countries()` - Fetch all countries from swimrankings.net
+- `get_country_name(nation_id)` - Get country name by nation ID
+- `get_country_code(nation_id)` - Get 3-letter country code by nation ID
+- `find_nation_id_by_code(country_code)` - Find nation ID by country code (case-insensitive)
+
+### Time Period Functions
+- `fetch_time_periods()` - Fetch all time periods/month codes
+- `get_available_years()` - Get list of available years (sorted descending)
+- `get_months_for_year(year)` - Get months for specific year
+
+### Caching Functions
+- `get_cached_countries()` - Get countries with caching
+- `get_cached_time_periods()` - Get time periods with caching
+- `clear_cache()` - Clear all cached data
+
+## Error Handling
+
+All functions handle network and parsing errors gracefully:
+
+```python
+import swimrankings
+from swimrankings import NetworkError, ParseError
+
+try:
+    countries = swimrankings.fetch_countries()
+except NetworkError as e:
+    print(f"Network error: {e}")
+except ParseError as e:
+    print(f"Parsing error: {e}")
+```
+
+The utility functions (like `get_country_name`) return `None` if an error occurs or the data is not found, making them safe to use without explicit error handling.
