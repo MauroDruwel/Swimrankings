@@ -37,10 +37,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/MauroDruwel/swimrankings"
-Documentation = "https://swimrankings.maurodruwel.be"
-Repository = "https://github.com/MauroDruwel/swimrankings"
-Issues = "https://github.com/MauroDruwel/swimrankings/issues"
+Homepage = "https://github.com/MauroDruwel/Swimrankings"
+Documentation = "https://maurodruwel.be/Swimrankings/"
+Repository = "https://github.com/MauroDruwel/Swimrankings"
+Issues = "https://github.com/MauroDruwel/Swimrankings/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["swimrankings"]

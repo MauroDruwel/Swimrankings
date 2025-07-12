@@ -56,7 +56,6 @@ docs/
 │   ├── index.mdx          # Homepage
 │   ├── installation.mdx   # Installation guide
 │   ├── quick-start.mdx    # Quick start guide
-│   ├── api.mdx           # API reference
 │   ├── examples.mdx      # Usage examples
 │   ├── error-handling.mdx # Error handling guide
 │   ├── contributing.mdx   # Contributing guide
@@ -117,7 +116,6 @@ import { Callout, Cards, Card, Steps, Tabs, Tab } from 'nextra/components'
 
 <Cards>
   <Card icon="📖" title="Guide" href="/guide" />
-  <Card icon="🔗" title="API" href="/api" />
 </Cards>
 
 <Steps>

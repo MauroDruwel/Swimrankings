@@ -6,19 +6,17 @@ A modern Python library for interacting with [swimrankings.net](https://www.swim
 
 - 🏊‍♀️ **Athlete Search**: Search for athletes by name, gender, and other criteria
 - 📈 **Detailed Data**: Fetch personal bests, profile information, and more
-- 🎯 **Modern API**: Clean, intuitive class-based interface
 - 📊 **Type Hints**: Full type annotation support for better IDE experience
 - 🔍 **Flexible Filtering**: Filter athletes by gender, country, club, etc.
 - 🚀 **Async Support**: Coming soon!
 
 ## Documentation
 
-📖 **[Full Documentation](docs/)** - Complete documentation with examples, API reference, and guides
+📖 **[Full Documentation](docs/)** - Complete documentation with examples and guides
 
 The documentation is built with [Nextra](https://nextra.site/) and includes:
 - Installation guide
 - Quick start tutorial
-- Complete API reference
 - Usage examples
 - Error handling guide
 - Contributing guidelines
@@ -65,9 +63,6 @@ male_athletes = Athletes(name="Druwel", gender="male")
 # Search for female athletes only  
 female_athletes = Athletes(name="Druwel", gender="female")
 ```
-
-## API Reference
-
 ### Athletes Class
 
 The main class for searching athletes on swimrankings.net.

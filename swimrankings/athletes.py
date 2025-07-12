@@ -212,7 +212,7 @@ class Athlete:
         # Based on the provided HTML, look for tables with class "athleteBest"
         best_table = soup.find("table", class_="athleteBest")
         
-        if best_table:
+        if best_table and isinstance(best_table, Tag):
             personal_bests.extend(self._parse_athlete_best_table(best_table))
         
         # Also try generic table parsing as fallback
@@ -227,11 +227,12 @@ class Athlete:
             if not headers:
                 continue
                 
-            header_texts = [th.get_text(strip=True).lower() for th in headers]
+            header_texts = [th.get_text(strip=True).lower() for th in headers if isinstance(th, Tag)]
             
             # Check if this looks like a times table
             if any(keyword in " ".join(header_texts) for keyword in ["time", "event", "date", "meet"]):
-                personal_bests.extend(self._parse_times_table(table))
+                if isinstance(table, Tag):
+                    personal_bests.extend(self._parse_times_table(table))
         
         return personal_bests
 
@@ -245,24 +246,26 @@ class Athlete:
         Returns:
             List of PersonalBest objects
         """
-        personal_bests = []
+        personal_bests: List[PersonalBest] = []
         
         # Skip the header row and parse data rows
-        rows = table.find_all("tr")[1:]  # Skip header row
+        all_rows = table.find_all("tr")
+        rows = [row for row in all_rows[1:] if isinstance(row, Tag)]  # Skip header row and filter Tags
         
         for row in rows:
             try:
                 cells = row.find_all("td")
-                if len(cells) < 7:  # Expect at least 7 columns based on HTML structure
+                tag_cells = [cell for cell in cells if isinstance(cell, Tag)]
+                if len(tag_cells) < 7:  # Expect at least 7 columns based on HTML structure
                     continue
                 
                 # Extract data based on the HTML structure provided
-                event_cell = cells[0]  # Event column
-                course_cell = cells[1]  # Course column (Baan)
-                time_cell = cells[2]   # Time column (Tijd)
-                date_cell = cells[4]   # Date column (Datum)
-                city_cell = cells[5]   # City column (Plaats)
-                meet_cell = cells[6]   # Meet column (Wedstrijd)
+                event_cell = tag_cells[0]  # Event column
+                course_cell = tag_cells[1]  # Course column (Baan)
+                time_cell = tag_cells[2]   # Time column (Tijd)
+                date_cell = tag_cells[4]   # Date column (Datum)
+                city_cell = tag_cells[5]   # City column (Plaats)
+                meet_cell = tag_cells[6]   # Meet column (Wedstrijd)
                 
                 # Extract text content
                 event = event_cell.get_text(strip=True)
@@ -312,14 +315,15 @@ class Athlete:
         Returns:
             List of PersonalBest objects
         """
-        personal_bests = []
+        personal_bests: List[PersonalBest] = []
         
         # Get header row to understand column structure
         header_row = table.find("tr")
-        if not header_row:
+        if not header_row or not isinstance(header_row, Tag):
             return personal_bests
             
-        headers = [th.get_text(strip=True).lower() for th in header_row.find_all(["th", "td"])]
+        header_elements = header_row.find_all(["th", "td"])
+        headers = [th.get_text(strip=True).lower() for th in header_elements if isinstance(th, Tag)]
         
         # Find column indices
         event_idx = next((i for i, h in enumerate(headers) if "event" in h), None)
@@ -330,10 +334,12 @@ class Athlete:
         location_idx = next((i for i, h in enumerate(headers) if "location" in h or "place" in h), None)
         
         # Parse data rows
-        rows = table.find_all("tr")[1:]  # Skip header row
+        all_rows = table.find_all("tr")
+        rows = [row for row in all_rows[1:] if isinstance(row, Tag)]  # Skip header row and filter Tags
         
         for row in rows:
-            cells = row.find_all(["td", "th"])
+            all_cells = row.find_all(["td", "th"])
+            cells = [cell for cell in all_cells if isinstance(cell, Tag)]
             if len(cells) < 2:  # Need at least event and time
                 continue
                 
@@ -377,7 +383,7 @@ class Athlete:
         Returns:
             List of PersonalBest objects
         """
-        personal_bests = []
+        personal_bests: List[PersonalBest] = []
         
         # Look for patterns in the text that might indicate times
         text = section.get_text()
@@ -405,19 +411,19 @@ class Athlete:
         
         # Parse athlete header information
         header_div = soup.find("div", id="header_athleteDetail")
-        if header_div:
+        if header_div and isinstance(header_div, Tag):
             # Extract athlete info from the header
             athleteinfo_div = header_div.find("div", id="athleteinfo")
-            if athleteinfo_div:
+            if athleteinfo_div and isinstance(athleteinfo_div, Tag):
                 # Extract name and birth year with gender
                 name_div = athleteinfo_div.find("div", id="name")
-                if name_div:
+                if name_div and isinstance(name_div, Tag):
                     name_text = name_div.get_text(strip=True)
                     profile_info["header_name"] = name_text
                 
                 # Extract nation and club
                 nationclub_div = athleteinfo_div.find("div", id="nationclub")
-                if nationclub_div:
+                if nationclub_div and isinstance(nationclub_div, Tag):
                     nationclub_text = nationclub_div.get_text(strip=True)
                     lines = [line.strip() for line in nationclub_text.split('\n') if line.strip()]
                     
@@ -433,32 +439,39 @@ class Athlete:
         info_tables = soup.find_all("table", class_=re.compile(r".*info.*|.*profile.*|.*athlete.*", re.I))
         
         for table in info_tables:
-            rows = table.find_all("tr")
-            for row in rows:
-                cells = row.find_all(["td", "th"])
-                if len(cells) >= 2:
-                    key = cells[0].get_text(strip=True).lower()
-                    value = cells[1].get_text(strip=True)
-                    if key and value:
-                        profile_info[key] = value
+            if isinstance(table, Tag):
+                all_rows = table.find_all("tr")
+                rows = [row for row in all_rows if isinstance(row, Tag)]
+                for row in rows:
+                    all_cells = row.find_all(["td", "th"])
+                    cells = [cell for cell in all_cells if isinstance(cell, Tag)]
+                    if len(cells) >= 2:
+                        key = cells[0].get_text(strip=True).lower()
+                        value = cells[1].get_text(strip=True)
+                        if key and value:
+                            profile_info[key] = value
         
         # Look for other structured data
         divs = soup.find_all("div", class_=re.compile(r".*info.*|.*detail.*", re.I))
         for div in divs:
-            # Extract any structured information
-            labels = div.find_all(["strong", "b", "label"])
-            for label in labels:
-                text = label.get_text(strip=True)
-                if text and ":" in text:
-                    key, value = text.split(":", 1)
-                    profile_info[key.strip().lower()] = value.strip()
+            if isinstance(div, Tag):
+                # Extract any structured information
+                all_labels = div.find_all(["strong", "b", "label"])
+                labels = [label for label in all_labels if isinstance(label, Tag)]
+                for label in labels:
+                    text = label.get_text(strip=True)
+                    if text and ":" in text:
+                        key, value = text.split(":", 1)
+                        profile_info[key.strip().lower()] = value.strip()
         
         # Extract photo URL if available
         photo_div = soup.find("div", id="photo")
-        if photo_div:
+        if photo_div and isinstance(photo_div, Tag):
             img = photo_div.find("img")
-            if img and img.get("src"):
-                profile_info["photo_url"] = img.get("src")
+            if img and isinstance(img, Tag):
+                src = img.get("src")
+                if src and isinstance(src, str):
+                    profile_info["photo_url"] = src
         
         return profile_info
 
@@ -539,7 +552,7 @@ class Athletes:
             ParseError: If the response cannot be parsed
             AthleteNotFoundError: If no athletes are found
         """
-        params = {
+        params: Dict[str, Union[str, int]] = {
             "internalRequest": "athleteFind",
             "athlete_clubId": self.club_id,
             "athlete_gender": self.GENDER_MAP[self.gender],
@@ -583,11 +596,12 @@ class Athletes:
         
         # Find the athlete search table
         table = soup.find("table", class_="athleteSearch")
-        if not table:
+        if not table or not isinstance(table, Tag):
             return
 
         # Find all athlete rows (skip the header row)
-        rows = table.find_all("tr", class_=re.compile(r"athleteSearch\d+"))
+        all_rows = table.find_all("tr", class_=re.compile(r"athleteSearch\d+"))
+        rows = [row for row in all_rows if isinstance(row, Tag)]
         
         for row in rows:
             athlete = self._parse_athlete_row(row)
@@ -607,15 +621,16 @@ class Athletes:
         try:
             # Find the name cell with the link
             name_cell = row.find("td", class_="name")
-            if not name_cell:
+            if not name_cell or not isinstance(name_cell, Tag):
                 return None
                 
             link = name_cell.find("a")
-            if not link:
+            if not link or not isinstance(link, Tag):
                 return None
 
             # Extract athlete ID from the href
-            href = link.get("href", "")
+            href_raw = link.get("href", "")
+            href = href_raw if isinstance(href_raw, str) else ""
             athlete_id_match = re.search(r"athleteId=(\d+)", href)
             if not athlete_id_match:
                 return None
@@ -626,13 +641,14 @@ class Athletes:
 
             # Extract birth year
             date_cell = row.find("td", class_="date")
-            birth_year = int(date_cell.get_text(strip=True)) if date_cell else 0
+            birth_year = int(date_cell.get_text(strip=True)) if date_cell and isinstance(date_cell, Tag) else 0
 
             # Extract gender from image
             gender_img = row.find("img")
             gender = "unknown"
-            if gender_img:
-                src = gender_img.get("src", "")
+            if gender_img and isinstance(gender_img, Tag):
+                src_raw = gender_img.get("src", "")
+                src = src_raw if isinstance(src_raw, str) else ""
                 if "gender1.png" in src:
                     gender = "male"
                 elif "gender2.png" in src:
@@ -640,11 +656,11 @@ class Athletes:
 
             # Extract country code
             code_cell = row.find("td", class_="code")
-            country = code_cell.get_text(strip=True) if code_cell else ""
+            country = code_cell.get_text(strip=True) if code_cell and isinstance(code_cell, Tag) else ""
 
             # Extract club name
             club_cell = row.find("td", class_="club")
-            club = club_cell.get_text(strip=True) if club_cell else ""
+            club = club_cell.get_text(strip=True) if club_cell and isinstance(club_cell, Tag) else ""
 
             # Build full profile URL
             profile_url = urljoin(self.BASE_URL, href)

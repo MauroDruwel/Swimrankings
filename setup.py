@@ -13,7 +13,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Mauro Druwel",
     author_email="mauro.druwel@gmail.com",
-    url="https://github.com/MauroDruwel/swimrankings",
+    url="https://github.com/MauroDruwel/Swimrankings",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
