@@ -51,7 +51,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
 
   publish:
-    needs: [build, test-publish]
+    needs: build
     runs-on: ubuntu-latest
     if: github.event.release.prerelease == false
     environment: 
