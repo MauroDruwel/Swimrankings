@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "swimrankings"
-version = "0.1.0"
+version = "0.1.1"
 description = "A modern Python library for interacting with swimrankings.net"
 readme = "README.md"
 authors = [{name = "Mauro Druwel", email = "mauro.druwel@gmail.com"}]

@@ -1,6 +1,6 @@
 {
   "name": "swimrankings-docs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Documentation for SwimRankings Python library",
   "scripts": {
     "dev": "next dev",
