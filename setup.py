@@ -32,6 +32,8 @@ setup(
         "curl-cffi>=0.6.0",
         "beautifulsoup4>=4.11.0",
         "lxml>=4.9.0",
+        "nodriver>=0.37",
+        "pyvirtualdisplay>=3.0",
     ],
     extras_require={
         "dev": [

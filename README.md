@@ -16,6 +16,34 @@ A modern Python library for interacting with [swimrankings.net](https://www.swim
 pip install swimrankings
 ```
 
+### Cloudflare requirement
+
+swimrankings.net is protected by Cloudflare's "Just a moment..." challenge. To
+get past it, this library solves the challenge **once** using a real local
+Chrome/Chromium browser (driven by [`nodriver`](https://github.com/ultrafunkamsterdam/nodriver)),
+then reuses the resulting clearance for fast `curl_cffi` requests. The clearance
+is cached on disk (`~/.cache/swimrankings/`) and refreshed automatically when it
+expires. No third-party services, accounts, or API keys are involved.
+
+Requirements:
+
+- **Chrome or Chromium** installed locally.
+- On a headless server (no display), install the system **`xvfb`** package — the
+  challenge cannot be solved with headless Chrome, so a virtual display is used
+  automatically via `pyvirtualdisplay`:
+
+  ```bash
+  sudo apt-get install -y xvfb chromium
+  ```
+
+The first request in a fresh environment is slower (it launches the browser);
+subsequent requests use the cached clearance and are fast.
+
+Optional environment variables:
+
+- `SWIMRANKINGS_BROWSER_PATH` — path to a specific Chrome/Chromium binary.
+- `SWIMRANKINGS_CACHE_DIR` — override the clearance cache directory.
+
 ## Quick Start
 
 ```python
