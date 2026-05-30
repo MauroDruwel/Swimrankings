@@ -116,27 +116,25 @@ class TestAthletes:
         with pytest.raises(InvalidGenderError):
             Athletes(name="Test", gender="invalid")
             
-    @patch('swimrankings.athletes.requests.get')
+    @patch('swimrankings.http.get')
     def test_network_error(self, mock_get):
         """Test that network errors are handled properly."""
-        import requests
-        mock_get.side_effect = requests.exceptions.RequestException("Network error")
-        
+        mock_get.side_effect = NetworkError("Network error")
+
         with pytest.raises(NetworkError):
             Athletes(name="Test")
             
-    @patch('swimrankings.athletes.requests.get')
+    @patch('swimrankings.http.get')
     def test_no_athletes_found(self, mock_get):
         """Test behavior when no athletes are found."""
         mock_response = Mock()
         mock_response.text = "<html><body>No results</body></html>"
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         with pytest.raises(AthleteNotFoundError):
             Athletes(name="NonexistentName")
             
-    @patch('swimrankings.athletes.requests.get')
+    @patch('swimrankings.http.get')
     def test_successful_search(self, mock_get):
         """Test successful athlete search."""
         # Mock HTML response similar to the real one
@@ -160,7 +158,6 @@ class TestAthletes:
         
         mock_response = Mock()
         mock_response.text = mock_html
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         athletes = Athletes(name="Druwel")
@@ -180,7 +177,7 @@ class TestAthletes:
         assert Athletes.GENDER_MAP["male"] == 1
         assert Athletes.GENDER_MAP["female"] == 2
         
-    @patch('swimrankings.athletes.requests.get')
+    @patch('swimrankings.http.get')
     def test_filtering_methods(self, mock_get):
         """Test athlete filtering methods."""
         # Create mock athletes
@@ -205,7 +202,6 @@ class TestAthletes:
         
         mock_response = Mock()
         mock_response.text = mock_html
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         athletes = Athletes(name="Test")

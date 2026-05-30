@@ -97,7 +97,7 @@ class TestAthleteDetailsMethod:
         assert not athlete._is_valid_time("24")
         assert not athlete._is_valid_time("24.5")
 
-    @patch('swimrankings.athlete.requests.get')
+    @patch('swimrankings.http.get')
     def test_get_details_success(self, mock_get, athlete):
         """Test successful athlete details retrieval."""
         # Mock HTML response
@@ -118,7 +118,6 @@ class TestAthleteDetailsMethod:
         
         mock_response = Mock()
         mock_response.text = mock_html
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         details = athlete.get_details()
@@ -133,24 +132,23 @@ class TestAthleteDetailsMethod:
         assert args[0] == athlete.profile_url
         assert kwargs['timeout'] == 30
 
-    @patch('swimrankings.athlete.requests.get')
+    @patch('swimrankings.http.get')
     def test_get_details_network_error(self, mock_get, athlete):
         """Test network error handling."""
-        from requests.exceptions import RequestException
+        from swimrankings.exceptions import NetworkError as NE
         
-        mock_get.side_effect = RequestException("Connection failed")
+        mock_get.side_effect = NE("Connection failed")
         
         with pytest.raises(NetworkError) as exc_info:
             athlete.get_details()
         
         assert "Failed to fetch athlete details" in str(exc_info.value)
 
-    @patch('swimrankings.athlete.requests.get')
+    @patch('swimrankings.http.get')
     def test_get_details_parse_error(self, mock_get, athlete):
         """Test parse error handling."""
         mock_response = Mock()
         mock_response.text = "<invalid>html"
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         # Mock BeautifulSoup to raise an exception during parsing
@@ -229,10 +227,9 @@ class TestAthleteDetailsMethod:
 
     def test_custom_timeout(self, athlete):
         """Test custom timeout parameter."""
-        with patch('swimrankings.athlete.requests.get') as mock_get:
+        with patch('swimrankings.http.get') as mock_get:
             mock_response = Mock()
             mock_response.text = "<html></html>"
-            mock_response.raise_for_status.return_value = None
             mock_get.return_value = mock_response
             
             athlete.get_details(timeout=60)

@@ -6,9 +6,9 @@ including country codes and time period selections.
 """
 
 from typing import Dict, List, Tuple, Optional
-import requests
 from bs4 import BeautifulSoup, Tag
 import re
+from . import http
 from .exceptions import NetworkError, ParseError
 
 
@@ -27,17 +27,9 @@ def fetch_countries() -> Dict[str, Tuple[str, str]]:
     url = "https://www.swimrankings.net/index.php?page=meetSelect&nationId=0&selectPage=RECENT"
     
     try:
-        response = requests.get(
-            url,
-            timeout=30,
-            headers={
-                "User-Agent": "SwimRankings Python Library/0.1.0",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            }
-        )
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        raise NetworkError(f"Failed to fetch countries data: {e}")
+        response = http.get(url, timeout=30)
+    except NetworkError as e:
+        raise NetworkError(f"Failed to fetch countries data: {e}") from e
 
     try:
         return _parse_countries(response.text)
@@ -60,17 +52,9 @@ def fetch_time_periods() -> Dict[str, str]:
     url = "https://www.swimrankings.net/index.php?page=meetSelect&nationId=0&selectPage=RECENT"
     
     try:
-        response = requests.get(
-            url,
-            timeout=30,
-            headers={
-                "User-Agent": "SwimRankings Python Library/0.1.0",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            }
-        )
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        raise NetworkError(f"Failed to fetch time periods data: {e}")
+        response = http.get(url, timeout=30)
+    except NetworkError as e:
+        raise NetworkError(f"Failed to fetch time periods data: {e}") from e
 
     try:
         return _parse_time_periods(response.text)

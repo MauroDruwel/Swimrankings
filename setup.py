@@ -29,7 +29,7 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "requests>=2.28.0",
+        "curl-cffi>=0.6.0",
         "beautifulsoup4>=4.11.0",
         "lxml>=4.9.0",
     ],
