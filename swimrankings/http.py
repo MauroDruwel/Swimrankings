@@ -180,6 +180,7 @@ def _browser_solve(url: str, timeout: int) -> Dict[str, Any]:
     browser_path = os.environ.get("SWIMRANKINGS_BROWSER_PATH")
     start_kwargs: Dict[str, Any] = {
         "headless": False,
+        "sandbox": False,
         "browser_args": ["--no-sandbox", "--disable-gpu", "--window-size=1440,900"],
     }
     if browser_path:
