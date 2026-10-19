@@ -144,8 +144,9 @@ def _maybe_start_display() -> None:
     Cloudflare detects headless Chrome, so the browser must run in headed mode;
     on a server with no X display we provide one via Xvfb.
     """
-    global _display
-    if os.environ.get("DISPLAY"):
+    import sys
+
+    if sys.platform in ("darwin", "win32") or os.environ.get("DISPLAY"):
         return
     if _display is not None:
         return
@@ -218,8 +219,17 @@ def _browser_solve(url: str, timeout: int) -> Dict[str, Any]:
         asyncio.set_event_loop(loop)
         state: Optional[Dict[str, Any]] = loop.run_until_complete(_run())
     finally:
-        asyncio.set_event_loop(None)
-        loop.close()
+        try:
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        except Exception:
+            pass
+        finally:
+            asyncio.set_event_loop(None)
+            loop.close()
 
     if not state:
         raise NetworkError(
