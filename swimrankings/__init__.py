@@ -19,7 +19,7 @@ from .reference_data import (
     clear_cache
 )
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 __author__ = "Mauro Druwel"
 __email__ = "mauro.druwel@gmail.com"
 

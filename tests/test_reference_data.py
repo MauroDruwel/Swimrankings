@@ -3,6 +3,7 @@ Tests for reference_data module.
 """
 
 import pytest
+from unittest.mock import Mock
 from swimrankings.reference_data import (
     fetch_countries,
     fetch_time_periods,
@@ -12,6 +13,34 @@ from swimrankings.reference_data import (
     get_available_years,
     get_months_for_year,
 )
+
+
+@pytest.fixture(autouse=True)
+def mock_reference_data_http(monkeypatch):
+    """Mock HTTP responses for reference data tests to keep them deterministic and fast."""
+    codes = [f"{chr(65 + i // 26)}{chr(65 + i % 26)}A" for i in range(150)]
+    countries_html = "".join(
+        f'<option value="{i+1000}">{code}  -  Country {code}</option>'
+        for i, code in enumerate(codes)
+    )
+    countries_html += (
+        '<option value="43">BEL  -  Belgium</option>'
+        '<option value="378">USA  -  United States</option>'
+        '<option value="273">NED  -  Netherlands</option>'
+    )
+
+    periods_html = ""
+    for y in range(2000, 2026):
+        for m in range(1, 13):
+            periods_html += f'<option value="{y}_m{m:02d}">{y} - month {m:02d}</option>'
+
+    html = f'<html><select name="nationId">{countries_html}</select><select name="selectPage">{periods_html}</select></html>'
+
+    mock_resp = Mock()
+    mock_resp.status_code = 200
+    mock_resp.text = html
+
+    monkeypatch.setattr("swimrankings.reference_data.http.get", lambda *a, **kw: mock_resp)
 
 
 def test_fetch_countries():

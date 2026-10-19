@@ -12,12 +12,11 @@ from swimrankings.exceptions import NetworkError, ParseError, AthleteNotFoundErr
 class TestAthletesParsing:
     """Test Athletes parsing functionality."""
 
-    @patch('swimrankings.search.requests.get')
+    @patch('swimrankings.http.get')
     def test_parse_error_handling(self, mock_get):
         """Test parse error handling in Athletes."""
         mock_response = Mock()
         mock_response.text = "<invalid>html"
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         # Mock BeautifulSoup to raise an exception during parsing
@@ -29,7 +28,7 @@ class TestAthletesParsing:
             
             assert "Failed to parse response" in str(exc_info.value)
 
-    @patch('swimrankings.search.requests.get')
+    @patch('swimrankings.http.get')
     def test_no_athletes_found_error(self, mock_get):
         """Test AthleteNotFoundError when no athletes are found."""
         # Mock HTML with no athlete results
@@ -43,7 +42,6 @@ class TestAthletesParsing:
         
         mock_response = Mock()
         mock_response.text = mock_html
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         with pytest.raises(AthleteNotFoundError) as exc_info:
@@ -52,14 +50,13 @@ class TestAthletesParsing:
         assert "No athletes found for name 'NonexistentAthlete'" in str(exc_info.value)
         assert "with gender filter 'all'" in str(exc_info.value)
 
-    @patch('swimrankings.search.requests.get')
+    @patch('swimrankings.http.get')
     def test_no_athletes_found_with_gender_filter(self, mock_get):
         """Test AthleteNotFoundError with gender filter."""
         mock_html = '<html><body><p>No results</p></body></html>'
         
         mock_response = Mock()
         mock_response.text = mock_html
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         with pytest.raises(AthleteNotFoundError) as exc_info:
@@ -67,7 +64,7 @@ class TestAthletesParsing:
         
         assert "with gender filter 'female'" in str(exc_info.value)
 
-    @patch('swimrankings.search.requests.get')
+    @patch('swimrankings.http.get')
     def test_advanced_filtering_edge_cases(self, mock_get):
         """Test advanced filtering with edge cases."""
         # Mock HTML with multiple athletes
@@ -99,7 +96,6 @@ class TestAthletesParsing:
         
         mock_response = Mock()
         mock_response.text = mock_html
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         athletes = Athletes(name="Test")
@@ -121,7 +117,7 @@ class TestAthletesParsing:
         no_gender = athletes.filter_by_gender("unknown")
         assert len(no_gender) == 0
 
-    @patch('swimrankings.search.requests.get')
+    @patch('swimrankings.http.get')
     def test_athletes_object_creation(self, mock_get):
         """Test Athletes object creation and basic functionality."""
         mock_html = '''
@@ -138,7 +134,6 @@ class TestAthletesParsing:
         
         mock_response = Mock()
         mock_response.text = mock_html
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         athletes = Athletes(name="Test")
@@ -152,7 +147,7 @@ class TestAthletesParsing:
         for athlete in athletes:
             assert athlete.full_name == "TEST, One"
 
-    @patch('swimrankings.search.requests.get')
+    @patch('swimrankings.http.get')
     def test_to_dict_with_empty_list(self, mock_get):
         """Test to_dict method with empty athlete list."""
         mock_html = '''
@@ -163,14 +158,13 @@ class TestAthletesParsing:
         
         mock_response = Mock()
         mock_response.text = mock_html
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         # Since no athletes found, this should raise AthleteNotFoundError
         with pytest.raises(AthleteNotFoundError):
             Athletes(name="Test")
 
-    @patch('swimrankings.search.requests.get')
+    @patch('swimrankings.http.get')
     def test_different_gender_parameter_values(self, mock_get):
         """Test different gender parameter values in search."""
         mock_html = '''
@@ -187,7 +181,6 @@ class TestAthletesParsing:
         
         mock_response = Mock()
         mock_response.text = mock_html
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         # Test with different gender values

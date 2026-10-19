@@ -10,7 +10,6 @@ from .athlete import Athlete
 from .search import Athletes
 
 # For backwards compatibility with tests, import modules that tests may try to patch
-import requests
 from bs4 import BeautifulSoup
 from . import utils
 from . import parsers

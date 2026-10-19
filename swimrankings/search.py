@@ -6,9 +6,9 @@ import re
 from typing import List, Optional, Iterator, Union, Dict, Any
 from urllib.parse import urljoin
 
-import requests
 from bs4 import BeautifulSoup, Tag
 
+from . import http
 from .athlete import Athlete
 from .exceptions import (
     NetworkError,
@@ -88,18 +88,13 @@ class Athletes:
         }
 
         try:
-            response = requests.get(
+            response = http.get(
                 self.BASE_URL,
                 params=params,
                 timeout=self.timeout,
-                headers={
-                    "User-Agent": "SwimRankings Python Library/0.1.0",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                }
             )
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            raise NetworkError(f"Failed to fetch data from swimrankings.net: {e}")
+        except NetworkError as e:
+            raise NetworkError(f"Failed to fetch data from swimrankings.net: {e}") from e
 
         try:
             self._parse_response(response.text)

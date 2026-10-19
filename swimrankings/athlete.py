@@ -5,9 +5,9 @@ Core Athlete class for individual athlete data and details.
 from datetime import datetime
 from typing import Dict, Any, List
 
-import requests
 from bs4 import BeautifulSoup, Tag
 
+from . import http
 from .models import AthleteDetails, PersonalBest
 from .parsers import parse_personal_bests, parse_times_table
 from .utils import parse_profile_info, is_valid_time
@@ -111,17 +111,9 @@ class Athlete:
             ParseError: If the response cannot be parsed
         """
         try:
-            response = requests.get(
-                self.profile_url,
-                timeout=timeout,
-                headers={
-                    "User-Agent": "SwimRankings Python Library/0.1.0",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                }
-            )
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            raise NetworkError(f"Failed to fetch athlete details: {e}")
+            response = http.get(self.profile_url, timeout=timeout)
+        except NetworkError as e:
+            raise NetworkError(f"Failed to fetch athlete details: {e}") from e
 
         try:
             return self._parse_athlete_details(response.text)
