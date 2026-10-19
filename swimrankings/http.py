@@ -146,6 +146,7 @@ def _maybe_start_display() -> None:
     """
     import sys
 
+    global _display
     if sys.platform in ("darwin", "win32") or os.environ.get("DISPLAY"):
         return
     if _display is not None:
