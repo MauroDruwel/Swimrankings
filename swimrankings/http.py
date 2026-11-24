@@ -25,15 +25,16 @@ locally against a Chrome/Chromium install.
 
 import json
 import os
+import re
 import tempfile
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from curl_cffi import requests as cffi_requests
 
-from .exceptions import NetworkError
+from .exceptions import AuthenticationError, NetworkError
 
 
 # TLS fingerprint to impersonate. A recent Chrome keeps us consistent with the
@@ -59,6 +60,41 @@ _session_lock = threading.Lock()
 _refresh_lock = threading.Lock()
 _last_refresh = 0.0
 _display: Any = None
+_auth: Optional[Tuple[str, str]] = None
+_auth_lock = threading.Lock()
+
+
+def set_auth(
+    username: Optional[str] = None, password: Optional[str] = None
+) -> None:
+    """Set global credentials for Swimrankings Member authentication.
+
+    Pass ``None`` for both arguments to clear stored credentials.
+    """
+    global _auth
+    with _auth_lock:
+        if username and password:
+            _auth = (username, password)
+        else:
+            _auth = None
+    with _session_lock:
+        if _session is not None:
+            _session.auth = _auth
+
+
+def get_auth() -> Optional[Tuple[str, str]]:
+    """Get currently configured authentication credentials."""
+    with _auth_lock:
+        if _auth is not None:
+            return _auth
+    env_user = (
+        os.environ.get("SWIMRANKINGS_USERNAME")
+        or os.environ.get("SWIMRANKINGS_EMAIL")
+    )
+    env_pass = os.environ.get("SWIMRANKINGS_PASSWORD")
+    if env_user and env_pass:
+        return (env_user, env_pass)
+    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -113,10 +149,15 @@ def _get_session() -> Any:
     global _session
     with _session_lock:
         if _session is None:
-            _session = cffi_requests.Session(impersonate=IMPERSONATE)  # type: ignore[arg-type]
+            _session = cffi_requests.Session(
+                impersonate=IMPERSONATE  # type: ignore[arg-type]
+            )
             state = _load_state()
             if state:
                 _apply_state(_session, state)
+            effective_auth = get_auth()
+            if effective_auth:
+                _session.auth = effective_auth
         return _session
 
 
@@ -286,11 +327,101 @@ def _refresh_clearance(url: str) -> None:
 # --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #
-def _raw_get(session: Any, url: str, **kwargs: Any) -> Any:
+_LOGIN_ERROR_RE = re.compile(
+    r'id=["\']loginForm["\'].*?class=["\']error["\']', re.DOTALL | re.IGNORECASE
+)
+
+
+def _raw_request(session: Any, method: str, url: str, **kwargs: Any) -> Any:
     try:
-        return session.get(url, **kwargs)
+        return getattr(session, method)(url, **kwargs)
     except cffi_requests.exceptions.RequestException as exc:
         raise NetworkError(f"HTTP request failed: {exc}") from exc
+
+
+def _request(method: str, url: str, apply_auth: bool = True, **kwargs: Any) -> Any:
+    if apply_auth and "auth" not in kwargs:
+        effective_auth = get_auth()
+        if effective_auth:
+            kwargs["auth"] = effective_auth
+
+    response = _raw_request(_get_session(), method, url, **kwargs)
+
+    if _is_cf_challenge(response):
+        target = str(getattr(response, "url", "") or url)
+        _refresh_clearance(target)
+        response = _raw_request(_get_session(), method, url, **kwargs)
+        if _is_cf_challenge(response):
+            raise NetworkError(
+                "Cloudflare challenge could not be solved for this request."
+            )
+
+    if response.status_code == 401:
+        if "auth" in kwargs:
+            raise AuthenticationError(
+                "Swimrankings rejected the provided credentials (HTTP 401). "
+                "Please check your email and password."
+            )
+        raise AuthenticationError(
+            "Access to this page requires a Swimrankings Member account "
+            "(HTTP 401). Provide credentials via "
+            "swimrankings.login('email', 'password'), "
+            "swimrankings.set_auth('email', 'password'), or set the "
+            "SWIMRANKINGS_USERNAME and SWIMRANKINGS_PASSWORD environment "
+            "variables."
+        )
+
+    try:
+        response.raise_for_status()
+    except cffi_requests.exceptions.RequestException as exc:
+        raise NetworkError(f"HTTP {response.status_code} error: {exc}") from exc
+
+    return response
+
+
+def login(username: str, password: str, timeout: int = 30) -> bool:
+    """Authenticate with swimrankings.net as a Swimrankings Member.
+
+    Submits the web login form on swimrankings.net to establish an authenticated
+    session and stores credentials for HTTP Basic Auth on protected endpoints.
+
+    Args:
+        username: Account email address
+        password: Account password
+        timeout: Request timeout in seconds
+
+    Returns:
+        True if login was successful.
+
+    Raises:
+        AuthenticationError: If credentials are incorrect.
+        NetworkError: On connection or HTTP errors.
+    """
+    data = {
+        "loginsubmitted": "1",
+        "lemail": username,
+        "lpassword": password,
+    }
+    response = _request(
+        "post",
+        "https://www.swimrankings.net/index.php",
+        apply_auth=False,
+        data=data,
+        timeout=timeout,
+    )
+
+    body = response.text
+    if (
+        "email or password is incorrect" in body.lower()
+        or _LOGIN_ERROR_RE.search(body)
+    ):
+        set_auth(None, None)
+        raise AuthenticationError(
+            "Invalid Swimrankings credentials: Email or password is incorrect."
+        )
+
+    set_auth(username, password)
+    return True
 
 
 def get(url: str, **kwargs: Any) -> Any:
@@ -300,23 +431,9 @@ def get(url: str, **kwargs: Any) -> Any:
     solved the Cloudflare challenge, which this module manages automatically.
 
     Raises:
+        AuthenticationError: If swimrankings.net requires member authentication
+            (HTTP 401).
         NetworkError: On connection failure, an unsolved Cloudflare challenge,
             or an HTTP error status.
     """
-    response = _raw_get(_get_session(), url, **kwargs)
-
-    if _is_cf_challenge(response):
-        target = str(getattr(response, "url", "") or url)
-        _refresh_clearance(target)
-        response = _raw_get(_get_session(), url, **kwargs)
-        if _is_cf_challenge(response):
-            raise NetworkError(
-                "Cloudflare challenge could not be solved for this request."
-            )
-
-    try:
-        response.raise_for_status()
-    except cffi_requests.exceptions.RequestException as exc:
-        raise NetworkError(f"HTTP {response.status_code} error: {exc}") from exc
-
-    return response
+    return _request("get", url, **kwargs)

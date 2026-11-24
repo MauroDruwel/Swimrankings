@@ -9,6 +9,7 @@ The SwimRankings library provides a clear hierarchy of exceptions:
 ```
 SwimRankingsError (base exception)
 ├── NetworkError
+│   └── AuthenticationError
 ├── AthleteNotFoundError
 ├── InvalidGenderError
 └── ParseError
@@ -33,6 +34,23 @@ except AthleteNotFoundError as e:
 - Misspelled athlete name
 - Very uncommon name
 - Restrictive gender filter
+
+### AuthenticationError
+
+Raised when Swimrankings requires Swimrankings Member authentication (`HTTP 401`) or rejects invalid credentials.
+
+```python
+import swimrankings
+from swimrankings import Athletes, AuthenticationError
+
+try:
+    athlete = Athletes(name="Marchand")[0]
+    details = athlete.get_details()
+except AuthenticationError as e:
+    print(f"Authentication required: {e}")
+    swimrankings.login("your_email@example.com", "your_password")
+    details = athlete.get_details()
+```
 
 ### NetworkError
 

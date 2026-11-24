@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 from datetime import datetime
 
 from swimrankings import Athlete, PersonalBest, AthleteDetails
-from swimrankings.exceptions import NetworkError, ParseError
+from swimrankings.exceptions import AuthenticationError, NetworkError, ParseError
 
 
 class TestPersonalBest:
@@ -143,6 +143,52 @@ class TestAthleteDetailsMethod:
             athlete.get_details()
         
         assert "Failed to fetch athlete details" in str(exc_info.value)
+
+    @patch('swimrankings.http.get')
+    def test_get_details_authentication_error(self, mock_get, athlete):
+        """Test authentication error handling re-raises AuthenticationError."""
+        mock_get.side_effect = AuthenticationError("Auth required")
+
+        with pytest.raises(AuthenticationError) as exc_info:
+            athlete.get_details()
+
+        assert "Auth required" in str(exc_info.value)
+
+    @patch('swimrankings.http.get')
+    def test_get_details_with_custom_auth(self, mock_get, athlete):
+        """Test passing explicit auth tuple to get_details."""
+        mock_response = Mock()
+        mock_response.text = "<html><body></body></html>"
+        mock_get.return_value = mock_response
+
+        athlete.get_details(auth=("custom_user", "custom_pass"))
+
+        mock_get.assert_called_once_with(
+            athlete.profile_url, timeout=30, auth=("custom_user", "custom_pass")
+        )
+
+    @patch('swimrankings.http.get')
+    def test_athlete_instance_auth_used_in_get_details(self, mock_get):
+        """Test athlete with instance-level auth uses it in get_details."""
+        ath = Athlete(
+            athlete_id=123,
+            full_name="Marchand, Leon",
+            birth_year=2002,
+            gender="male",
+            country="FRA",
+            club="Club",
+            profile_url="https://www.swimrankings.net/athlete/123",
+            auth=("inst_user", "inst_pass"),
+        )
+        mock_response = Mock()
+        mock_response.text = "<html><body></body></html>"
+        mock_get.return_value = mock_response
+
+        ath.get_details()
+
+        mock_get.assert_called_once_with(
+            ath.profile_url, timeout=30, auth=("inst_user", "inst_pass")
+        )
 
     @patch('swimrankings.http.get')
     def test_get_details_parse_error(self, mock_get, athlete):

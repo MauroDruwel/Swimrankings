@@ -43,6 +43,52 @@ Optional environment variables:
 
 - `SWIMRANKINGS_BROWSER_PATH` — path to a specific Chrome/Chromium binary.
 - `SWIMRANKINGS_CACHE_DIR` — override the clearance cache directory.
+- `SWIMRANKINGS_USERNAME` / `SWIMRANKINGS_PASSWORD` — credentials for a free Swimrankings Member account.
+
+### Authentication (Swimrankings Member)
+
+On [swimrankings.net](https://www.swimrankings.net), most athlete detail pages (`get_details()`) return `HTTP 401` (`Basic realm="Swimrankings Member"`) when requested anonymously, while some profiles remain publicly accessible without authentication.
+
+When accessing an athlete profile that requires authentication without credentials, `AuthenticationError` is raised. You can authenticate using a Swimrankings Member account via any of the following methods:
+
+**1. Using `swimrankings.login()` (recommended):**
+
+```python
+import swimrankings
+
+# Authenticate once in your session
+swimrankings.login("your_email@example.com", "your_password")
+
+athletes = swimrankings.Athletes(name="Marchand")
+details = athletes[0].get_details()
+```
+
+**2. Using environment variables:**
+
+```bash
+export SWIMRANKINGS_USERNAME="your_email@example.com"
+export SWIMRANKINGS_PASSWORD="your_password"
+```
+
+```python
+import swimrankings
+
+athletes = swimrankings.Athletes(name="Marchand")
+details = athletes[0].get_details()
+```
+
+**3. Passing credentials directly:**
+
+```python
+from swimrankings import Athletes
+
+# Pass credentials to search (automatically propagated to athletes)
+athletes = Athletes(name="Marchand", auth=("your_email@example.com", "your_password"))
+details = athletes[0].get_details()
+
+# Or pass directly when fetching details
+details = athletes[0].get_details(auth=("your_email@example.com", "your_password"))
+```
 
 ## Quick Start
 

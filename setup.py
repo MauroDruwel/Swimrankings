@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="swimrankings",
-    version="0.2.0",
+    version="0.3.0",
     description="A modern Python library for interacting with swimrankings.net",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -20,14 +20,12 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=[
         "curl-cffi>=0.6.0",
         "beautifulsoup4>=4.11.0",
