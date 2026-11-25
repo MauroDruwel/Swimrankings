@@ -3,7 +3,7 @@ Core Athlete class for individual athlete data and details.
 """
 
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Tuple
 
 from bs4 import BeautifulSoup, Tag
 
@@ -11,7 +11,7 @@ from . import http
 from .models import AthleteDetails, PersonalBest
 from .parsers import parse_personal_bests, parse_times_table
 from .utils import parse_profile_info, is_valid_time
-from .exceptions import NetworkError, ParseError
+from .exceptions import AuthenticationError, NetworkError, ParseError
 
 
 class Athlete:
@@ -39,6 +39,7 @@ class Athlete:
         country: str,
         club: str,
         profile_url: str,
+        auth: Optional[Tuple[str, str]] = None,
     ) -> None:
         """
         Initialize an Athlete instance.
@@ -51,6 +52,7 @@ class Athlete:
             country: Country code
             club: Club name  
             profile_url: URL to athlete's profile page
+            auth: Optional credentials tuple (email, password)
         """
         self.athlete_id = athlete_id
         self.full_name = full_name
@@ -59,6 +61,7 @@ class Athlete:
         self.country = country
         self.club = club
         self.profile_url = profile_url
+        self.auth = auth
 
     @property
     def first_name(self) -> str:
@@ -96,22 +99,33 @@ class Athlete:
         """Hash based on athlete ID."""
         return hash(self.athlete_id)
 
-    def get_details(self, timeout: int = 30) -> AthleteDetails:
+    def get_details(
+        self, timeout: int = 30, auth: Optional[Tuple[str, str]] = None
+    ) -> AthleteDetails:
         """
         Fetch detailed information about the athlete including personal bests.
         
         Args:
             timeout: Request timeout in seconds
+            auth: Optional (email, password) credentials for Swimrankings Member
             
         Returns:
             AthleteDetails object containing personal bests and profile info
             
         Raises:
+            AuthenticationError: If access requires member credentials (HTTP 401)
             NetworkError: If there's a network connection issue
             ParseError: If the response cannot be parsed
         """
+        effective_auth = auth if auth is not None else self.auth
+        kwargs: Dict[str, Any] = {"timeout": timeout}
+        if effective_auth is not None:
+            kwargs["auth"] = effective_auth
+
         try:
-            response = http.get(self.profile_url, timeout=timeout)
+            response = http.get(self.profile_url, **kwargs)
+        except AuthenticationError:
+            raise
         except NetworkError as e:
             raise NetworkError(f"Failed to fetch athlete details: {e}") from e
 

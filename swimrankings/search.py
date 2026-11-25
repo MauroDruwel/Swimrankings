@@ -3,7 +3,7 @@ Athletes search class for finding athletes on swimrankings.net.
 """
 
 import re
-from typing import List, Optional, Iterator, Union, Dict, Any
+from typing import List, Optional, Iterator, Union, Dict, Any, Tuple
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
@@ -40,6 +40,7 @@ class Athletes:
         gender: str = "all",
         club_id: int = -1,
         timeout: int = 30,
+        auth: Optional[Tuple[str, str]] = None,
     ) -> None:
         """
         Initialize Athletes search.
@@ -49,6 +50,7 @@ class Athletes:
             gender: Gender filter - "all", "male", or "female"
             club_id: Club ID filter (-1 for all clubs)
             timeout: Request timeout in seconds
+            auth: Optional credentials tuple (email, password)
             
         Raises:
             InvalidGenderError: If gender is not valid
@@ -59,6 +61,7 @@ class Athletes:
         self.gender = gender.lower()
         self.club_id = club_id
         self.timeout = timeout
+        self.auth = auth
         self._athletes: List[Athlete] = []
         
         # Validate gender
@@ -87,12 +90,15 @@ class Athletes:
             "athlete_firstname": "",
         }
 
+        kwargs: Dict[str, Any] = {
+            "params": params,
+            "timeout": self.timeout,
+        }
+        if self.auth is not None:
+            kwargs["auth"] = self.auth
+
         try:
-            response = http.get(
-                self.BASE_URL,
-                params=params,
-                timeout=self.timeout,
-            )
+            response = http.get(self.BASE_URL, **kwargs)
         except NetworkError as e:
             raise NetworkError(f"Failed to fetch data from swimrankings.net: {e}") from e
 
@@ -195,6 +201,7 @@ class Athletes:
                 country=country,
                 club=club,
                 profile_url=profile_url,
+                auth=self.auth,
             )
 
         except (ValueError, AttributeError) as e:

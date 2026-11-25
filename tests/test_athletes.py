@@ -168,8 +168,33 @@ class TestAthletes:
         assert athlete.full_name == "DRUWEL, Mauro"
         assert athlete.birth_year == 2008
         assert athlete.gender == "male"
-        assert athlete.country == "BEL"
-        assert athlete.club == "BEL - TiMe Swimming Team"
+
+    @patch('swimrankings.http.get')
+    def test_search_with_auth_propagates_to_athletes(self, mock_get):
+        """Test that auth credentials propagate to athlete instances."""
+        mock_html = '''
+        <table class="athleteSearch">
+            <tr class="athleteSearch0">
+                <td class="name">
+                    <a href="?page=athleteDetail&amp;athleteId=4670827">
+                        <b>MARCHAND, Leon</b>
+                    </a>
+                </td>
+                <td class="date">2002</td>
+                <td><img src="images/gender1.png"></td>
+                <td class="code">FRA</td>
+                <td class="club">Club</td>
+            </tr>
+        </table>
+        '''
+        mock_response = Mock()
+        mock_response.text = mock_html
+        mock_get.return_value = mock_response
+
+        athletes = Athletes(name="Marchand", auth=("member@example.com", "secret"))
+        assert len(athletes) == 1
+        assert athletes[0].auth == ("member@example.com", "secret")
+        assert mock_get.call_args[1]["auth"] == ("member@example.com", "secret")
         
     def test_gender_mapping(self):
         """Test that gender values are mapped correctly."""

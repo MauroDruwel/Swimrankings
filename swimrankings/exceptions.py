@@ -13,6 +13,11 @@ class NetworkError(SwimRankingsError):
     pass
 
 
+class AuthenticationError(NetworkError):
+    """Raised when swimrankings.net requires member authentication (HTTP 401)."""
+    pass
+
+
 class AthleteNotFoundError(SwimRankingsError):
     """Raised when no athletes are found for the given search criteria."""
     pass
