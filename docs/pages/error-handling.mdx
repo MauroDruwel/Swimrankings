@@ -15,6 +15,16 @@ SwimRankingsError (base exception)
 └── ParseError
 ```
 
+`SwimRankingsError`, `NetworkError`, `AuthenticationError` and `AthleteNotFoundError` are
+exported from `swimrankings`. Import `InvalidGenderError` and `ParseError` from
+`swimrankings.exceptions`:
+
+```python
+from swimrankings.exceptions import InvalidGenderError, ParseError
+```
+
+`AuthenticationError` subclasses `NetworkError`, so catch it first if you handle both.
+
 ## Common Exceptions
 
 ### AthleteNotFoundError
@@ -78,7 +88,8 @@ except NetworkError as e:
 Raised when an invalid gender value is provided.
 
 ```python
-from swimrankings import Athletes, InvalidGenderError
+from swimrankings import Athletes
+from swimrankings.exceptions import InvalidGenderError
 
 try:
     athletes = Athletes(name="Smith", gender="invalid")
@@ -93,7 +104,8 @@ except InvalidGenderError as e:
 Raised when the HTML response cannot be parsed properly.
 
 ```python
-from swimrankings import Athletes, ParseError
+from swimrankings import Athletes
+from swimrankings.exceptions import ParseError
 
 try:
     athletes = Athletes(name="Smith")
@@ -114,14 +126,8 @@ except ParseError as e:
 Always handle the most specific exceptions first:
 
 ```python
-from swimrankings import (
-    Athletes,
-    AthleteNotFoundError,
-    NetworkError,
-    InvalidGenderError,
-    ParseError,
-    SwimRankingsError
-)
+from swimrankings import Athletes, AthleteNotFoundError, NetworkError, SwimRankingsError
+from swimrankings.exceptions import InvalidGenderError, ParseError
 
 def search_athletes_safely(name, gender="all"):
     try:
@@ -307,12 +313,13 @@ When writing tests, you can simulate error conditions:
 import pytest
 from unittest.mock import patch
 from swimrankings import Athletes, NetworkError
+from swimrankings.exceptions import InvalidGenderError
 
 def test_network_error_handling():
     """Test that network errors are handled properly."""
-    with patch('swimrankings.athletes.requests.get') as mock_get:
-        mock_get.side_effect = Exception("Network error")
-        
+    with patch('swimrankings.http.get') as mock_get:
+        mock_get.side_effect = NetworkError("Network error")
+
         with pytest.raises(NetworkError):
             Athletes(name="Test")
 
@@ -327,11 +334,9 @@ def test_invalid_gender():
 ### Enable Verbose Error Messages
 
 ```python
-import requests
+import logging
 from swimrankings import Athletes
 
-# Enable requests logging for debugging
-import logging
 logging.basicConfig(level=logging.DEBUG)
 
 try:
@@ -343,28 +348,27 @@ except Exception as e:
 
 ### Check Response Content
 
-For debugging parse errors:
+For debugging parse errors, use the same HTTP client as the library; it clears the
+Cloudflare challenge automatically and raises `NetworkError` or `AuthenticationError`:
 
 ```python
-import requests
 from bs4 import BeautifulSoup
+from swimrankings import http
 
-# Manual request to debug
 url = "https://www.swimrankings.net/index.php"
 params = {
     'internalRequest': 'athleteFind',
     'athlete_clubId': -1,
     'athlete_gender': -1,
     'athlete_lastname': 'TestName',
-    'athlete_firstname': ''
+    'athlete_firstname': '',
 }
 
-response = requests.get(url, params=params)
+response = http.get(url, params=params)
 print(f"Status code: {response.status_code}")
 print(f"Response length: {len(response.text)}")
 print(f"First 500 chars: {response.text[:500]}")
 
-# Check if table exists
 soup = BeautifulSoup(response.text, 'lxml')
 table = soup.find('table', class_='athleteSearch')
 print(f"Table found: {table is not None}")

@@ -6,9 +6,9 @@ We welcome contributions to the SwimRankings library! This guide will help you g
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher (required by `nodriver`)
 - Git
-- Node.js 16+ (for documentation)
+- Node.js 18.17+ (for the Next.js 14 documentation site)
 
 ### Setting Up the Development Environment
 
@@ -52,32 +52,31 @@ python -m pytest tests/test_athletes.py -v
 
 ```bash
 # Format code with black
-python -m black swimrankings/ tests/ example.py
+python -m black swimrankings/ tests/
 
 # Lint with flake8
-python -m flake8 swimrankings/ tests/ example.py
+python -m flake8 swimrankings/ tests/
 
 # Type checking with mypy
 python -m mypy swimrankings/ --ignore-missing-imports
 ```
 
-### Development Script
+### Development Commands
 
-Use the included development script for common tasks:
+There is no `dev.py` script in this repository; run the tools directly:
 
 ```bash
-# Set up development environment
-python dev.py setup
+# Run all tests
+python -m pytest tests/ -v
 
-# Run all quality checks
-python dev.py all
+# Format code
+python -m black swimrankings/ tests/
 
-# Individual commands
-python dev.py format    # Format code
-python dev.py lint      # Lint code
-python dev.py typecheck # Type checking
-python dev.py test      # Run tests
-python dev.py example   # Run example
+# Lint code
+python -m flake8 swimrankings/ tests/
+
+# Type checking
+python -m mypy swimrankings/ --ignore-missing-imports
 ```
 
 ## Contributing Guidelines
@@ -125,10 +124,9 @@ Example test:
 ```python
 def test_athlete_search_by_name():
     """Test that athlete search by name returns expected results."""
-    with patch('swimrankings.athletes.requests.get') as mock_get:
+    with patch('swimrankings.http.get') as mock_get:
         mock_response = Mock()
         mock_response.text = mock_html_response
-        mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
         athletes = Athletes(name="TestName")
@@ -163,8 +161,8 @@ Example bug report:
 ## Bug Report
 
 **Environment:**
-- Python 3.9.0
-- swimrankings 0.1.1
+- Python 3.10+
+- swimrankings 0.3.0
 - Windows 10
 
 **Description:**
@@ -198,7 +196,7 @@ For new features, please provide:
 1. **Fork** the repository
 2. **Create a feature branch**: `git checkout -b feature/new-feature`
 3. **Make your changes** with tests
-4. **Run the test suite**: `python dev.py all`
+4. **Run the test suite**: `python -m pytest tests/ -v`
 5. **Update documentation** if needed
 6. **Commit your changes**: Use clear, descriptive commit messages
 7. **Push to your fork**: `git push origin feature/new-feature`
@@ -206,10 +204,10 @@ For new features, please provide:
 
 #### Pull Request Checklist
 
-- [ ] Tests pass (`python dev.py test`)
-- [ ] Code is formatted (`python dev.py format`)
-- [ ] Code is linted (`python dev.py lint`)
-- [ ] Type checking passes (`python dev.py typecheck`)
+- [ ] Tests pass (`python -m pytest tests/ -v`)
+- [ ] Code is formatted (`python -m black swimrankings/ tests/`)
+- [ ] Code is linted (`python -m flake8 swimrankings/ tests/`)
+- [ ] Type checking passes (`python -m mypy swimrankings/ --ignore-missing-imports`)
 - [ ] Documentation is updated
 - [ ] CHANGELOG.md is updated (if applicable)
 - [ ] Backward compatibility is maintained
@@ -272,7 +270,7 @@ For new features, please provide:
 1. **Update version** in `setup.py` and `pyproject.toml`
 2. **Update CHANGELOG.md** with new features and fixes
 3. **Run full test suite** on multiple Python versions
-4. **Create release tag**: `git tag v0.2.0`
+4. **Create release tag**: `git tag v<version>` (e.g. `v0.3.0`)
 5. **Build package**: `python -m build`
 6. **Upload to PyPI**: `twine upload dist/*`
 
@@ -325,7 +323,7 @@ athletes = Athletes(name="TestName")
 
 ```python
 # Quick local test
-python example.py
+python -m pytest tests/ -v
 
 # Test specific functionality
 python -c "

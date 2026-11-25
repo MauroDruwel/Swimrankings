@@ -42,8 +42,9 @@ subsequent requests use the cached clearance and are fast.
 Optional environment variables:
 
 - `SWIMRANKINGS_BROWSER_PATH` — path to a specific Chrome/Chromium binary.
-- `SWIMRANKINGS_CACHE_DIR` — override the clearance cache directory.
-- `SWIMRANKINGS_USERNAME` / `SWIMRANKINGS_PASSWORD` — credentials for a free Swimrankings Member account.
+- `SWIMRANKINGS_CACHE_DIR` — override the clearance cache directory (`~/.cache/swimrankings/` by default).
+- `DISPLAY` — X display used by the browser; on headless Linux a virtual display is started automatically when this is unset.
+- `SWIMRANKINGS_USERNAME` / `SWIMRANKINGS_PASSWORD` — credentials for a free Swimrankings Member account. `SWIMRANKINGS_EMAIL` is accepted as an alias for `SWIMRANKINGS_USERNAME`.
 
 ### Authentication (Swimrankings Member)
 
@@ -90,6 +91,23 @@ details = athletes[0].get_details()
 details = athletes[0].get_details(auth=("your_email@example.com", "your_password"))
 ```
 
+**4. Storing credentials with `set_auth()`:**
+
+```python
+import swimrankings
+
+swimrankings.set_auth("your_email@example.com", "your_password")
+print(swimrankings.get_auth())  # ('your_email@example.com', 'your_password')
+
+# Clear stored credentials again
+swimrankings.set_auth(None, None)
+```
+
+`login(username, password, timeout=30)` submits the web login form, returns `True` on
+success and raises `AuthenticationError` for invalid credentials. `get_details(timeout=30,
+auth=None)` accepts a per-call timeout and credentials tuple that override the athlete's
+stored credentials.
+
 ## Quick Start
 
 ```python
@@ -108,6 +126,10 @@ print(f"Personal bests: {len(details.personal_bests)}")
 for pb in details.personal_bests:
     print(f"  {pb.event} ({pb.course}): {pb.time}")
 ```
+
+Most athlete detail pages require a Swimrankings Member account. If `get_details()` raises
+`AuthenticationError`, authenticate first with `swimrankings.login(...)`, or pass
+`auth=(email, password)` to `get_details()` as shown above.
 
 ## Documentation
 
