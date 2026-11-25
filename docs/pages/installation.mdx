@@ -2,8 +2,12 @@
 
 ## Requirements
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - Internet connection for accessing swimrankings.net
+- Chrome or Chromium installed locally: swimrankings.net is protected by a Cloudflare
+  challenge that the library solves with a real browser
+- On headless Linux, the system `xvfb` package (a virtual display is started
+  automatically when no `DISPLAY` is available)
 
 ## Install from PyPI
 
@@ -57,13 +61,22 @@ except Exception as e:
 
 ## Dependencies
 
-The library requires the following packages:
+The library requires the following packages (installed automatically):
 
-- **requests**: For HTTP requests to swimrankings.net
-- **beautifulsoup4**: For HTML parsing
+- **curl-cffi**: HTTP requests with a Chrome TLS fingerprint
+- **beautifulsoup4**: HTML parsing
 - **lxml**: Fast XML/HTML parser
+- **nodriver**: Drives a local Chrome/Chromium browser to solve the Cloudflare challenge
+- **pyvirtualdisplay**: Starts a virtual display on headless Linux
 
-These are automatically installed when you install the library.
+No third-party services or API keys are used; the browser runs locally.
+
+## Optional Environment Variables
+
+- `SWIMRANKINGS_BROWSER_PATH` — path to a specific Chrome/Chromium binary.
+- `SWIMRANKINGS_CACHE_DIR` — Cloudflare clearance cache directory (`~/.cache/swimrankings/` by default).
+- `DISPLAY` — X display used by the browser; on headless Linux a virtual display is started automatically when this is unset.
+- `SWIMRANKINGS_USERNAME` / `SWIMRANKINGS_PASSWORD` — Swimrankings Member credentials. `SWIMRANKINGS_EMAIL` is accepted as an alias for `SWIMRANKINGS_USERNAME`.
 
 ## Troubleshooting
 
@@ -77,24 +90,15 @@ pip show swimrankings
 
 ### Network Issues
 
-The library requires internet access to fetch data from swimrankings.net. If you're behind a corporate firewall, you may need to configure proxy settings:
-
-```python
-import requests
-
-# Configure proxy if needed
-proxies = {
-    'http': 'http://your-proxy:port',
-    'https': 'https://your-proxy:port'
-}
-
-# The library doesn't currently support proxy configuration directly
-# You may need to set environment variables
-```
+The library requires internet access to fetch data from swimrankings.net and uses
+`curl_cffi` (not `requests`); it does not expose a proxy option. A restrictive proxy
+may also prevent the local browser from solving the Cloudflare challenge. If the
+challenge fails, check that Chrome/Chromium is installed and reachable, or set
+`SWIMRANKINGS_BROWSER_PATH` to its binary.
 
 ### Python Version Issues
 
-Make sure you're using Python 3.8 or higher:
+Make sure you're using Python 3.10 or higher:
 
 ```bash
 python --version

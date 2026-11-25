@@ -82,7 +82,8 @@ All functions handle network and parsing errors gracefully:
 
 ```python
 import swimrankings
-from swimrankings import NetworkError, ParseError
+from swimrankings import NetworkError
+from swimrankings.exceptions import ParseError
 
 try:
     countries = swimrankings.fetch_countries()
@@ -92,4 +93,7 @@ except ParseError as e:
     print(f"Parsing error: {e}")
 ```
 
-The utility functions (like `get_country_name`) return `None` if an error occurs or the data is not found, making them safe to use without explicit error handling.
+`get_country_name()`, `get_country_code()` and `find_nation_id_by_code()` return `None`
+when data is missing or a network/parse error occurs. `get_available_years()` returns an
+empty list and `get_months_for_year()` returns an empty dictionary in those cases;
+`fetch_countries()` and `fetch_time_periods()` raise `NetworkError` or `ParseError`.

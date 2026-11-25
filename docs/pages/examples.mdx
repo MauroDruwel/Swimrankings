@@ -19,6 +19,11 @@ for athlete in athletes:
 
 ### Getting Athlete Details
 
+Athlete detail pages usually require a Swimrankings Member account. Call
+`swimrankings.login("email", "password")` once per session, or pass
+`auth=(email, password)` to `get_details()`, otherwise protected profiles raise
+`AuthenticationError`.
+
 ```python
 from swimrankings import Athletes
 
@@ -350,12 +355,8 @@ for athlete in young_talents:
 ### Comprehensive Error Handling
 
 ```python
-from swimrankings import (
-    Athletes, 
-    AthleteNotFoundError, 
-    NetworkError, 
-    InvalidGenderError
-)
+from swimrankings import Athletes, AthleteNotFoundError, NetworkError
+from swimrankings.exceptions import InvalidGenderError
 
 def safe_athlete_search(name, gender="all"):
     """Safely search for athletes with comprehensive error handling."""

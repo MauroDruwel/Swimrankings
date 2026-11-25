@@ -31,7 +31,36 @@ Club: BEL - TiMe Swimming Team
 Profile: https://www.swimrankings.net/index.php?page=athleteDetail&athleteId=5425825
 ```
 
+## Search Options
+
+`Athletes(name, gender="all", club_id=-1, timeout=30, auth=None)` accepts a last name, a
+gender filter (`"all"`, `"male"` or `"female"`), a club ID (`-1` for all clubs), a request
+timeout in seconds and optional `(email, password)` credentials:
+
+```python
+athletes = Athletes(
+    name="Smith",
+    gender="male",
+    club_id=123,
+    timeout=30,
+    auth=("your_email@example.com", "your_password"),
+)
+```
+
 ## Getting Detailed Athlete Information
+
+Most athlete detail pages require a Swimrankings Member account. Authenticate before
+calling `get_details()`, or pass credentials directly to that call; otherwise a protected
+profile raises `AuthenticationError`:
+
+```python
+import swimrankings
+
+# Authenticate once per session (or set SWIMRANKINGS_USERNAME / SWIMRANKINGS_PASSWORD)
+swimrankings.login("your_email@example.com", "your_password")
+
+# Alternatively: athlete.get_details(auth=("your_email@example.com", "your_password"))
+```
 
 Once you have an athlete, you can fetch detailed information including personal bests:
 
