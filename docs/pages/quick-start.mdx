@@ -1,10 +1,12 @@
+import { Tabs, Tab, Callout } from 'nextra/components'
+
 # Quick Start
 
 This guide will get you up and running with the SwimRankings library in minutes.
 
 ## Basic Search
 
-The most common use case is searching for athletes by name:
+The most common use case is searching for athletes by last name:
 
 ```python
 from swimrankings import Athletes
@@ -20,8 +22,8 @@ for athlete in athletes:
     print()
 ```
 
-Output:
-```
+Example output:
+```text
 DRUWEL, Mauro (2008) - BEL
 Club: BEL - TiMe Swimming Team
 Profile: https://www.swimrankings.net/index.php?page=athleteDetail&athleteId=5199475
@@ -34,10 +36,12 @@ Profile: https://www.swimrankings.net/index.php?page=athleteDetail&athleteId=542
 ## Search Options
 
 `Athletes(name, gender="all", club_id=-1, timeout=30, auth=None)` accepts a last name, a
-gender filter (`"all"`, `"male"` or `"female"`), a club ID (`-1` for all clubs), a request
-timeout in seconds and optional `(email, password)` credentials:
+gender filter (`"all"`, `"male"`, or `"female"`), a club ID (`-1` for all clubs), a request
+timeout in seconds, and optional `(email, password)` credentials:
 
 ```python
+from swimrankings import Athletes
+
 athletes = Athletes(
     name="Smith",
     gender="male",
@@ -47,47 +51,71 @@ athletes = Athletes(
 )
 ```
 
-## Getting Detailed Athlete Information
+## Authenticating & Getting Athlete Details
 
-Most athlete detail pages require a Swimrankings Member account. Authenticate before
-calling `get_details()`, or pass credentials directly to that call; otherwise a protected
-profile raises `AuthenticationError`:
+<Callout type="info">
+  Most athlete detail pages on swimrankings.net return `HTTP 401` when requested anonymously. Authenticate with a free Swimrankings Member account before calling `get_details()`, or pass `auth=(email, password)` directly.
+</Callout>
 
-```python
-import swimrankings
+<Tabs items={['swimrankings.login()', 'Environment Variables', 'Per-call auth']}>
+  <Tab>
+    ```python
+    import swimrankings
+    from swimrankings import Athletes, AuthenticationError
 
-# Authenticate once per session (or set SWIMRANKINGS_USERNAME / SWIMRANKINGS_PASSWORD)
-swimrankings.login("your_email@example.com", "your_password")
+    # 1. Authenticate once for the current Python process
+    swimrankings.login("your_email@example.com", "your_password")
 
-# Alternatively: athlete.get_details(auth=("your_email@example.com", "your_password"))
-```
+    # 2. Search and fetch detailed personal bests
+    athletes = Athletes(name="Druwel")
+    athlete = athletes[0]
 
-Once you have an athlete, you can fetch detailed information including personal bests:
+    try:
+        details = athlete.get_details()
+        print(f"Details for {athlete.full_name} (updated {details.last_updated:%Y-%m-%d})")
+        for pb in details.personal_bests:
+            print(f"  {pb.event} ({pb.course}): {pb.time} - {pb.date or 'N/A'}")
+    except AuthenticationError as exc:
+        print(f"Authentication failed: {exc}")
+    ```
+  </Tab>
+  <Tab>
+    ```bash
+    export SWIMRANKINGS_USERNAME="your_email@example.com"
+    export SWIMRANKINGS_PASSWORD="your_password"
+    ```
 
-```python
-from swimrankings import Athletes
+    ```python
+    from swimrankings import Athletes
 
-# Search for an athlete
-athletes = Athletes(name="Druwel")
-athlete = athletes[0]  # Get the first athlete
+    # Credentials are picked up automatically from environment variables
+    athlete = Athletes(name="Druwel")[0]
+    details = athlete.get_details()
 
-# Fetch detailed information
-details = athlete.get_details()
-
-print(f"Details for {athlete.full_name}")
-print(f"Last updated: {details.last_updated}")
-
-# Display personal bests
-if details.personal_bests:
-    print("\nPersonal Bests:")
     for pb in details.personal_bests:
-        print(f"  {pb.event} ({pb.course}): {pb.time}")
-        if pb.date:
-            print(f"    Date: {pb.date}")
-        if pb.meet:
-            print(f"    Meet: {pb.meet}")
+        print(f"{pb.event} ({pb.course}): {pb.time}")
+    ```
+  </Tab>
+  <Tab>
+    ```python
+    from swimrankings import Athletes
 
-# Display profile information
+    creds = ("your_email@example.com", "your_password")
+
+    # Option A: attach credentials at search time (propagates to every Athlete)
+    athletes = Athletes(name="Druwel", auth=creds)
+    details = athletes[0].get_details()
+
+    # Option B: pass credentials only to get_details()
+    athlete = Athletes(name="Druwel")[0]
+    details = athlete.get_details(auth=creds)
+    ```
+  </Tab>
+</Tabs>
+
+Inspecting profile metadata returned in `details`:
+
+```python
 if details.profile_info:
     print("\nProfile Information:")
     for key, value in details.profile_info.items():
@@ -96,111 +124,61 @@ if details.profile_info:
 
 ## Gender-Specific Searches
 
-You can filter athletes by gender:
+You can filter athletes by gender at query time:
 
 ```python
 from swimrankings import Athletes
 
-# Search for male athletes only
 male_athletes = Athletes(name="Smith", gender="male")
-print(f"Found {len(male_athletes)} male athletes")
-
-# Search for female athletes only
 female_athletes = Athletes(name="Smith", gender="female")
-print(f"Found {len(female_athletes)} female athletes")
-
-# Search all genders (default)
 all_athletes = Athletes(name="Smith", gender="all")
-print(f"Found {len(all_athletes)} total athletes")
+
+print(f"Male: {len(male_athletes)}, Female: {len(female_athletes)}, Total: {len(all_athletes)}")
 ```
 
 ## Working with Results
 
-The `Athletes` class provides multiple ways to work with search results:
-
-### Iteration
+`Athletes` implements Python's sequence and iterator protocols:
 
 ```python
 athletes = Athletes(name="Johnson")
 
-# Iterate through all athletes
+# Iterate
 for athlete in athletes:
     print(athlete.full_name)
-```
 
-### Indexing
-
-```python
-athletes = Athletes(name="Johnson")
-
-if len(athletes) > 0:
-    # Get first athlete
-    first_athlete = athletes[0]
-    print(f"First: {first_athlete.full_name}")
-    
-    # Get last athlete
-    last_athlete = athletes[-1]
-    print(f"Last: {last_athlete.full_name}")
-    
-    # Get subset using slicing
-    first_three = athletes[0:3]
-    print(f"First 3: {[a.full_name for a in first_three]}")
-```
-
-### Length and Boolean
-
-```python
-athletes = Athletes(name="Johnson")
-
-# Check how many athletes found
-print(f"Found {len(athletes)} athletes")
-
-# Check if any athletes found
+# Index and slice
 if athletes:
-    print("Athletes found!")
-else:
-    print("No athletes found")
+    first_athlete = athletes[0]
+    last_athlete = athletes[-1]
+    first_three = athletes[0:3]
+    print(f"Found {len(athletes)} athletes; top 3: {[a.full_name for a in first_three]}")
 ```
 
 ## Filtering Results
 
-Apply additional filters to your search results:
+Apply in-memory filters after a search without making extra HTTP requests:
 
 ```python
 athletes = Athletes(name="Miller")
 
-# Filter by country
 usa_athletes = athletes.filter_by_country("USA")
-print(f"USA athletes: {len(usa_athletes)}")
-
-# Filter by birth year range
 young_athletes = athletes.filter_by_birth_year(2005, 2015)
-print(f"Born 2005-2015: {len(young_athletes)}")
-
-# Filter by single birth year
 born_2008 = athletes.filter_by_birth_year(2008)
-print(f"Born in 2008: {len(born_2008)}")
-
-# Filter by gender (post-search)
 male_athletes = athletes.filter_by_gender("male")
-print(f"Male athletes: {len(male_athletes)}")
 ```
 
 ## Accessing Athlete Data
 
-Each athlete object provides detailed information:
+Each `Athlete` exposes parsed summary fields:
 
 ```python
-athletes = Athletes(name="Druwel")
-athlete = athletes[0]  # Get first athlete
+athlete = Athletes(name="Druwel")[0]
 
-# Basic information
 print(f"ID: {athlete.athlete_id}")
 print(f"Full name: {athlete.full_name}")
 print(f"First name: {athlete.first_name}")
 print(f"Last name: {athlete.last_name}")
-
-# Details
 print(f"Birth year: {athlete.birth_year}")
 print(f"Gender: {athlete.gender}")
 print(f"Country: {athlete.country}")
@@ -210,49 +188,38 @@ print(f"Profile URL: {athlete.profile_url}")
 
 ## Error Handling
 
-Always handle potential errors when working with external data:
+Catch `AuthenticationError` before `NetworkError` (since `AuthenticationError` subclasses `NetworkError`):
 
 ```python
-from swimrankings import Athletes, AthleteNotFoundError, NetworkError
+from swimrankings import Athletes, AthleteNotFoundError, AuthenticationError, NetworkError
 
 try:
     athletes = Athletes(name="NonexistentName")
-    print(f"Found {len(athletes)} athletes")
-    
+    details = athletes[0].get_details()
 except AthleteNotFoundError:
     print("No athletes found with that name")
-    
-except NetworkError as e:
-    print(f"Network error: {e}")
-    print("Please check your internet connection")
-    
-except Exception as e:
-    print(f"Unexpected error: {e}")
+except AuthenticationError:
+    print("Member login required or credentials rejected")
+except NetworkError as exc:
+    print(f"Network error: {exc}")
 ```
 
 ## Data Export
 
-Convert athlete data to other formats:
+Convert search results to plain dictionaries for JSON, CSV, or Pandas:
 
 ```python
-athletes = Athletes(name="Smith")
-
-# Convert to list of dictionaries
-athletes_dict = athletes.to_dict()
-print(f"Exported {len(athletes_dict)} athletes")
-
-# Example: save to JSON
 import json
-with open("athletes.json", "w") as f:
-    json.dump(athletes_dict, f, indent=2)
+from swimrankings import Athletes
 
-# Example: create DataFrame (requires pandas)
-import pandas as pd
-df = pd.DataFrame(athletes_dict)
-print(df.head())
+athletes_dict = Athletes(name="Smith").to_dict()
+with open("athletes.json", "w", encoding="utf-8") as f:
+    json.dump(athletes_dict, f, indent=2, ensure_ascii=False)
 ```
 
 ## Next Steps
 
-- Check out [Examples](/examples) for more advanced use cases
-- Learn about [Error Handling](/error-handling) best practices
+- Browse practical workflows in [Examples](/examples)
+- Look up countries and seasons in [Reference Data](/reference-data)
+- Check signatures and fields in the [API Reference](/api-reference)
+- Learn recovery patterns in [Error Handling](/error-handling)

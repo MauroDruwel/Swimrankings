@@ -26,4 +26,4 @@ jobs:
       mode: "pr"
       docs-paths: "README.md,docs/pages"
       source-paths: "swimrankings"
-      extra-instructions: "Docs site uses Nextra in docs/pages/*.mdx (registered in docs/pages/_meta.json). Keep README.md, quick-start.mdx, examples.mdx, error-handling.mdx, installation.mdx, and contributing.mdx aligned with swimrankings/__init__.py, swimrankings/http.py, swimrankings/search.py, swimrankings/athlete.py, and pyproject.toml."
+      extra-instructions: "Docs site uses Nextra in docs/pages/*.mdx (registered in docs/pages/_meta.json). Keep README.md, docs/README.md, index.mdx, installation.mdx, quick-start.mdx, examples.mdx, reference-data.mdx, api-reference.mdx, error-handling.mdx, and contributing.mdx aligned with swimrankings/__init__.py, swimrankings/http.py, swimrankings/search.py, swimrankings/athlete.py, swimrankings/models.py, swimrankings/exceptions.py, swimrankings/reference_data.py, and pyproject.toml."

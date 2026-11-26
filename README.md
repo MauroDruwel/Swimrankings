@@ -1,14 +1,15 @@
 # SwimRankings Python Library
 
-A modern Python library for interacting with [swimrankings.net](https://www.swimrankings.net), providing easy access to athlete data, search functionality, and more.
+A modern Python library for interacting with [swimrankings.net](https://www.swimrankings.net), providing easy access to athlete searches, personal bests, Swimrankings Member authentication, and reference data.
 
 ## Features
 
-- 🏊‍♀️ **Athlete Search**: Search for athletes by name, gender, and other criteria
-- 📈 **Detailed Data**: Fetch personal bests, profile information, and more
-- 📊 **Type Hints**: Full type annotation support for better IDE experience
-- 🔍 **Flexible Filtering**: Filter athletes by gender, country, club, etc.
-- 🚀 **Async Support**: Coming soon!
+- 🏊‍♀️ **Athlete Search & Filtering**: Search athletes by last name, gender, and club ID, then filter by country, birth year, or gender
+- 📈 **Detailed Data**: Fetch `AthleteDetails` with normalized `PersonalBest` records (`LCM` / `SCM`), meet metadata, and profile info
+- 🔐 **Member Authentication**: Supports `swimrankings.login()`, `set_auth()`, environment variables, and per-call `auth=(email, password)`
+- 🛡️ **Built-in Cloudflare Clearance**: Automatically solves Cloudflare's challenge locally via Chrome/`nodriver` and caches clearance for fast `curl_cffi` requests
+- 🌍 **Reference Data**: Look up and cache countries/nation IDs and historical meet time periods
+- 📊 **Type Hints**: Full type annotation support (`mypy`-checked) for better IDE integration
 
 ## Installation
 
@@ -111,31 +112,38 @@ stored credentials.
 ## Quick Start
 
 ```python
-from swimrankings import Athletes
+import swimrankings
+from swimrankings import Athletes, AuthenticationError
 
-# Search for athletes by name
+# Authenticate once for protected athlete detail pages
+swimrankings.login("your_email@example.com", "your_password")
+
+# Search for athletes by last name (optionally filter by gender or club_id)
 athletes = Athletes(name="Druwel")
 for athlete in athletes:
     print(f"{athlete.full_name} ({athlete.birth_year}) - {athlete.country}")
 
 # Get detailed information including personal bests
 athlete = athletes[0]
-details = athlete.get_details()
-
-print(f"Personal bests: {len(details.personal_bests)}")
-for pb in details.personal_bests:
-    print(f"  {pb.event} ({pb.course}): {pb.time}")
+try:
+    details = athlete.get_details()
+    print(f"Personal bests: {len(details.personal_bests)}")
+    for pb in details.personal_bests:
+        print(f"  {pb.event} ({pb.course}): {pb.time}")
+except AuthenticationError:
+    print("Authentication required or invalid credentials")
 ```
-
-Most athlete detail pages require a Swimrankings Member account. If `get_details()` raises
-`AuthenticationError`, authenticate first with `swimrankings.login(...)`, or pass
-`auth=(email, password)` to `get_details()` as shown above.
 
 ## Documentation
 
-📖 **[Complete Documentation](https://maurodruwel.be/Swimrankings)** - Full API reference, examples, and guides
+📖 **[Complete Documentation](https://maurodruwel.be/Swimrankings)** — Full guides, examples, and API reference:
 
-For detailed usage examples, API reference, error handling, and contributing guidelines, please visit the complete documentation.
+- **[Installation](https://maurodruwel.be/Swimrankings/installation)** — Python 3.10+, Chrome/Chromium & `xvfb` setup, environment variables
+- **[Quick Start](https://maurodruwel.be/Swimrankings/quick-start)** — Searching, filtering, authentication, and fetching personal bests
+- **[Examples](https://maurodruwel.be/Swimrankings/examples)** — Real-world authentication flows, LCM vs SCM comparison, reference data lookups, CSV/JSON/Pandas exports, and retry patterns
+- **[Reference Data](https://maurodruwel.be/Swimrankings/reference-data)** — Country codes, nation IDs, and time periods with caching
+- **[API Reference](https://maurodruwel.be/Swimrankings/api-reference)** — Signatures, data models, exceptions, and environment variables
+- **[Error Handling](https://maurodruwel.be/Swimrankings/error-handling)** — Exception hierarchy and recovery strategies
 
 ## License
 

@@ -126,7 +126,13 @@ except ParseError as e:
 Always handle the most specific exceptions first:
 
 ```python
-from swimrankings import Athletes, AthleteNotFoundError, NetworkError, SwimRankingsError
+from swimrankings import (
+    Athletes,
+    AthleteNotFoundError,
+    AuthenticationError,
+    NetworkError,
+    SwimRankingsError,
+)
 from swimrankings.exceptions import InvalidGenderError, ParseError
 
 def search_athletes_safely(name, gender="all"):
@@ -140,6 +146,10 @@ def search_athletes_safely(name, gender="all"):
         
     except AthleteNotFoundError:
         print(f"🔍 No athletes found for '{name}' with gender '{gender}'")
+        return []
+
+    except AuthenticationError as e:
+        print(f"🔐 Authentication required or rejected: {e}")
         return []
         
     except NetworkError as e:
@@ -172,10 +182,10 @@ Implement retry logic for transient network issues:
 
 ```python
 import time
-from swimrankings import Athletes, NetworkError
+from swimrankings import Athletes, AuthenticationError, NetworkError
 
 def search_with_retry(name, max_retries=3, base_delay=1):
-    """Search with exponential backoff retry."""
+    """Search with exponential backoff retry for transient network errors."""
     last_error = None
     
     for attempt in range(max_retries):
@@ -183,6 +193,10 @@ def search_with_retry(name, max_retries=3, base_delay=1):
             athletes = Athletes(name=name)
             return list(athletes)
             
+        except AuthenticationError:
+            # Never retry authentication errors with the same credentials
+            raise
+
         except NetworkError as e:
             last_error = e
             if attempt == max_retries - 1:

@@ -16,15 +16,15 @@ This directory contains the documentation website for the SwimRankings Python li
 
 ### Prerequisites
 
-- Node.js 16 or higher
-- npm or yarn
+- Node.js 18.17 or higher (for Next.js 14)
+- npm
 
 ### Setup
 
 1. **Install dependencies:**
    ```bash
    cd docs
-   npm install
+   npm ci
    ```
 
 2. **Start development server:**
@@ -35,35 +35,26 @@ This directory contains the documentation website for the SwimRankings Python li
 3. **Open in browser:**
    Visit [http://localhost:3000](http://localhost:3000)
 
-### Alternative Setup
-
-Use the provided setup script from the root directory:
-
-```bash
-# From the project root
-python docs_setup.py setup  # Install dependencies
-python docs_setup.py dev    # Start development server
-python docs_setup.py build  # Build for production
-```
-
 ## Development
 
 ### File Structure
 
 ```
 docs/
-├── pages/                  # Documentation pages
-│   ├── index.mdx          # Homepage
-│   ├── installation.mdx   # Installation guide
-│   ├── quick-start.mdx    # Quick start guide
-│   ├── examples.mdx      # Usage examples
-│   ├── error-handling.mdx # Error handling guide
-│   ├── contributing.mdx   # Contributing guide
-│   └── _meta.json        # Page navigation configuration
-├── theme.config.tsx       # Nextra theme configuration
-├── next.config.js        # Next.js configuration
-├── package.json          # Dependencies and scripts
-└── tsconfig.json         # TypeScript configuration
+├── pages/                   # Documentation pages
+│   ├── index.mdx            # Homepage
+│   ├── installation.mdx     # Installation guide
+│   ├── quick-start.mdx      # Quick start guide
+│   ├── examples.mdx         # Usage examples & cookbook
+│   ├── reference-data.mdx   # Reference data guide
+│   ├── api-reference.mdx    # Complete API reference
+│   ├── error-handling.mdx   # Error handling guide
+│   ├── contributing.mdx     # Contributing guide
+│   └── _meta.json           # Page navigation configuration
+├── theme.config.tsx         # Nextra theme configuration
+├── next.config.js          # Next.js static export configuration
+├── package.json            # Dependencies and scripts
+└── tsconfig.json           # TypeScript configuration
 ```
 
 ### Adding New Pages
@@ -162,36 +153,19 @@ Edit `next.config.js` for:
 
 ## Building for Production
 
+`next.config.js` configures `output: 'export'` with `distDir: 'out'`.
+
 ```bash
-# Build the static site
+# Build the static site into docs/out/
 npm run build
 
-# Start production server
+# Start production preview server
 npm run start
 ```
 
-The built documentation will be in the `.next` directory.
-
 ## Deployment
 
-The documentation can be deployed to various platforms:
-
-### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Vercel will automatically build and deploy
-
-### Netlify
-
-1. Build the site: `npm run build && npm run export`
-2. Deploy the `out` directory to Netlify
-
-### GitHub Pages
-
-1. Add `output: 'export'` to `next.config.js`
-2. Build: `npm run build`
-3. Deploy the `out` directory
+Deploy the generated `docs/out/` directory to Cloudflare Pages, Vercel, Netlify, or GitHub Pages (`npm run build`).
 
 ## Writing Guidelines
 

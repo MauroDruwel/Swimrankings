@@ -1,9 +1,10 @@
 {
   "index": "Introduction",
-  "installation": "Installation", 
+  "installation": "Installation",
   "quick-start": "Quick Start",
   "examples": "Examples",
   "reference-data": "Reference Data",
+  "api-reference": "API Reference",
   "error-handling": "Error Handling",
   "contributing": "Contributing"
 }

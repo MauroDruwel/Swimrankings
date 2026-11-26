@@ -1,13 +1,17 @@
+import { Cards, Card, Callout } from 'nextra/components'
+
 # SwimRankings Python Library
 
-A modern Python library for interacting with [swimrankings.net](https://www.swimrankings.net), providing easy access to athlete data, search functionality, and more.
+A modern Python library for interacting with [swimrankings.net](https://www.swimrankings.net), providing easy access to athlete searches, personal bests, Swimrankings Member authentication, and reference data.
 
 ## Features
 
-- 🏊‍♀️ **Athlete Search**: Search for athletes by name, gender, and other criteria
-- 📊 **Type Hints**: Full type annotation support for better IDE experience
-- 🔍 **Flexible Filtering**: Filter athletes by gender, country, club, etc.
-- 🚀 **Robust**: Comprehensive error handling and testing
+- 🏊‍♀️ **Athlete Search & Filtering**: Search athletes by last name, gender, and club ID, then filter results by country, birth year, or gender.
+- 📈 **Personal Bests & Profiles**: Fetch `AthleteDetails` with structured `PersonalBest` records (`LCM` / `SCM`), meet metadata, and profile info.
+- 🔐 **Member Authentication**: Authenticate via `swimrankings.login()`, `set_auth()`, environment variables, or per-call `auth=(email, password)`.
+- 🛡️ **Built-in Cloudflare Clearance**: Solves Cloudflare's browser challenge locally using Chrome/`nodriver` and reuses cached clearance via fast `curl_cffi` requests.
+- 🌍 **Reference Data Helpers**: Fetch and cache Swimrankings country codes, nation IDs, and historical time periods.
+- 📊 **Type Hints**: Full `mypy`-checked type annotations across all public classes, dataclasses, and functions.
 
 ## Quick Start
 
@@ -20,36 +24,41 @@ pip install swimrankings
 ### Basic Usage
 
 ```python
-from swimrankings import Athletes
+import swimrankings
+from swimrankings import Athletes, AuthenticationError
 
-# Search for athletes by name
+# Authenticate once so protected athlete detail pages are accessible
+swimrankings.login("your_email@example.com", "your_password")
+
+# Search for athletes by last name
 athletes = Athletes(name="Druwel")
 for athlete in athletes:
     print(f"{athlete.full_name} ({athlete.birth_year}) - {athlete.country}")
 
-# Search for male athletes only
-male_athletes = Athletes(name="Druwel", gender="male")
-
-# Search for female athletes only  
-female_athletes = Athletes(name="Druwel", gender="female")
+# Fetch personal bests for the first result
+try:
+    details = athletes[0].get_details()
+    for pb in details.personal_bests[:5]:
+        print(f"  {pb.event} ({pb.course}): {pb.time}")
+except AuthenticationError:
+    print("Invalid or missing Swimrankings Member credentials")
 ```
 
-## Getting Started
-
-import { Cards, Card } from 'nextra/components'
+## Explore the Docs
 
 <Cards>
   <Card icon="📖" title="Installation" href="/installation" />
   <Card icon="🚀" title="Quick Start" href="/quick-start" />
   <Card icon="💡" title="Examples" href="/examples" />
+  <Card icon="🌍" title="Reference Data" href="/reference-data" />
+  <Card icon="📚" title="API Reference" href="/api-reference" />
+  <Card icon="⚠️" title="Error Handling" href="/error-handling" />
 </Cards>
 
 ## Community
-
-import { Callout } from 'nextra/components'
 
 <Callout type="info" emoji="🏊‍♀️">
   This library is developed for the swimming community. If you have suggestions or find issues, please contribute!
 </Callout>
 
-Ready to dive in? Check out the [installation guide](/installation) to get started!
+Ready to dive in? Check out the [installation guide](/installation) or jump straight into [real-world examples](/examples).

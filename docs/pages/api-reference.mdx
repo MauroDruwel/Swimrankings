@@ -1,0 +1,227 @@
+# API Reference
+
+Complete reference for the `swimrankings` package (`v0.3.0`, Python 3.10+).
+
+## Package Exports
+
+Top-level imports exposed by `swimrankings`:
+
+```python
+from swimrankings import (
+    # Core classes & data models
+    Athletes,
+    Athlete,
+    PersonalBest,
+    AthleteDetails,
+    # Authentication & session helpers
+    login,
+    set_auth,
+    get_auth,
+    # Reference data helpers
+    fetch_countries,
+    fetch_time_periods,
+    get_country_code,
+    get_country_name,
+    find_nation_id_by_code,
+    get_available_years,
+    get_months_for_year,
+    get_cached_countries,
+    get_cached_time_periods,
+    clear_cache,
+    # Exceptions
+    SwimRankingsError,
+    AthleteNotFoundError,
+    NetworkError,
+    AuthenticationError,
+)
+```
+
+Exceptions exported from `swimrankings.exceptions` (not re-exported at top level):
+
+```python
+from swimrankings.exceptions import InvalidGenderError, ParseError
+```
+
+Low-level HTTP and utility modules:
+
+- `swimrankings.http.get(url, **kwargs)` — Cloudflare-aware GET helper sharing the module session.
+- `swimrankings.utils.is_valid_time(time_str)` — Validates swimming time string formatting (`SS.CC`, `M:SS.CC`, `MM:SS.CC`, or `H:MM:SS.CC`).
+
+---
+
+## Core Classes
+
+### `Athletes`
+
+Searches swimrankings.net (`internalRequest=athleteFind`) on initialization and exposes the matched `Athlete` objects as an iterable sequence.
+
+```python
+class Athletes:
+    def __init__(
+        self,
+        name: str,
+        gender: str = "all",
+        club_id: int = -1,
+        timeout: int = 30,
+        auth: Optional[Tuple[str, str]] = None,
+    ) -> None: ...
+```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `name` | `str` | — | Last name to search for (leading/trailing whitespace is stripped). |
+| `gender` | `str` | `"all"` | Gender filter: `"all"`, `"male"`, or `"female"` (case-insensitive). |
+| `club_id` | `int` | `-1` | Swimrankings club ID filter (`-1` searches all clubs). |
+| `timeout` | `int` | `30` | HTTP request timeout in seconds. |
+| `auth` | `Optional[Tuple[str, str]]` | `None` | Optional `(email, password)` credentials propagated to each returned `Athlete`. |
+
+**Raises:** `InvalidGenderError`, `NetworkError` (or `AuthenticationError`), `ParseError`, `AthleteNotFoundError`.
+
+**Sequence & Container Protocol:**
+
+- `len(athletes)` — Number of matched athletes.
+- `for athlete in athletes` — Iterates over matched `Athlete` instances.
+- `athletes[index]` — Supports integer indexing and slicing (`List[Athlete]`).
+- `bool(athletes)` — `True` when at least one athlete was found.
+
+**Methods:**
+
+- `filter_by_country(country_code: str) -> List[Athlete]` — Case-insensitive filter on 3-letter country code (e.g., `"BEL"`, `"USA"`).
+- `filter_by_birth_year(min_year: int, max_year: Optional[int] = None) -> List[Athlete]` — Inclusive birth-year filter; matches a single year when `max_year` is `None`.
+- `filter_by_gender(gender: str) -> List[Athlete]` — Case-insensitive filter on `"male"` or `"female"`.
+- `to_dict() -> List[Dict[str, Any]]` — Returns a list of dicts with keys `athlete_id`, `full_name`, `first_name`, `last_name`, `birth_year`, `gender`, `country`, `club`, and `profile_url`.
+
+---
+
+### `Athlete`
+
+Represents a single swimmer from search results. Two `Athlete` instances are equal and hash identically when their `athlete_id` matches.
+
+**Attributes & Properties:**
+
+| Member | Type | Description |
+|---|---|---|
+| `athlete_id` | `int` | Unique Swimrankings athlete ID. |
+| `full_name` | `str` | Full name in `"Last, First"` format. |
+| `first_name` | `str` (property) | Extracted first name (or `""` if unavailable). |
+| `last_name` | `str` (property) | Extracted last name. |
+| `birth_year` | `int` | Year of birth (`0` if unavailable). |
+| `gender` | `str` | `"male"`, `"female"`, or `"unknown"`. |
+| `country` | `str` | 3-letter country code (e.g., `"BEL"`). |
+| `club` | `str` | Club label (e.g., `"BEL - TiMe Swimming Team"`). |
+| `profile_url` | `str` | Full URL to the athlete detail page. |
+| `auth` | `Optional[Tuple[str, str]]` | Default `(email, password)` credentials inherited from `Athletes`. |
+
+**Methods:**
+
+#### `athlete.get_details(timeout: int = 30, auth: Optional[Tuple[str, str]] = None) -> AthleteDetails`
+
+Fetches and parses the athlete's detail page (personal bests and profile metadata).
+
+- **Credential precedence:** per-call `auth` argument → `athlete.auth` → `set_auth()` / `login()` → environment variables.
+- **Raises:** `AuthenticationError` (when protected and unauthenticated or rejected), `NetworkError`, `ParseError`.
+
+---
+
+## Data Models
+
+### `AthleteDetails`
+
+`@dataclass` returned by `Athlete.get_details()`.
+
+| Field | Type | Description |
+|---|---|---|
+| `athlete_id` | `int` | Unique Swimrankings athlete ID. |
+| `personal_bests` | `List[PersonalBest]` | Parsed personal best times. |
+| `profile_info` | `Dict[str, Any]` | Parsed profile fields (`header_name`, `country_code`, `country_name`, `club_name`, `photo_url`, and table/label entries). |
+| `last_updated` | `datetime` | Local timestamp (`datetime.now()`) when details were fetched. |
+
+### `PersonalBest`
+
+`@dataclass` representing one personal best entry.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `event` | `str` | — | Event name (e.g., `"50m Freestyle"`). |
+| `course` | `str` | — | Pool course: `"LCM"` (mapped from `"50m"`), `"SCM"` (mapped from `"25m"`), `"SCY"`, or `"Unknown"`. |
+| `time` | `str` | — | Formatted swim time (e.g., `"24.50"`, `"1:52.34"`). |
+| `date` | `Optional[str]` | `None` | Date achieved (`None` when `"-"` or absent). |
+| `meet` | `Optional[str]` | `None` | Meet name (`None` when `"-"` or absent). |
+| `location` | `Optional[str]` | `None` | Meet city/location (`None` when `"-"` or absent). |
+
+---
+
+## Authentication & HTTP
+
+### `login(username: str, password: str, timeout: int = 30) -> bool`
+
+Submits the Swimrankings web login form (`POST https://www.swimrankings.net/index.php`) to establish an authenticated session and stores `(username, password)` globally via `set_auth()`.
+
+- Returns `True` on success.
+- Clears stored global credentials (`set_auth(None, None)`) and raises `AuthenticationError` if swimrankings.net rejects the login.
+- Raises `NetworkError` on connection or unexpected HTTP failures.
+
+### `set_auth(username: Optional[str] = None, password: Optional[str] = None) -> None`
+
+Sets process-wide HTTP Basic Auth credentials on the HTTP session. Pass `(None, None)` to clear stored credentials.
+
+### `get_auth() -> Optional[Tuple[str, str]]`
+
+Returns the active `(username, password)` tuple from `set_auth()`/`login()`, or falls back to `SWIMRANKINGS_USERNAME` (or `SWIMRANKINGS_EMAIL`) and `SWIMRANKINGS_PASSWORD` environment variables. Returns `None` if neither is configured.
+
+### `swimrankings.http.get(url: str, **kwargs: Any)`
+
+Performs an HTTP GET using the shared `curl_cffi` session, automatically solving Cloudflare challenges with a local Chrome/Chromium browser via `nodriver` and caching clearance (`cf_state.json`) for up to 2 hours (`CACHE_MAX_AGE = 7200`, `BROWSER_TIMEOUT = 45`). Do not pass a custom `User-Agent` header.
+
+---
+
+## Reference Data
+
+### Country Helpers
+
+- `fetch_countries() -> Dict[str, Tuple[str, str]]` — Fetches nation IDs mapped to `(code, name)` (e.g., `{"43": ("BEL", "Belgium")}`). Raises `NetworkError` or `ParseError`.
+- `get_country_code(nation_id: str) -> Optional[str]` — Returns the 3-letter country code for `nation_id`, or `None` if missing or on `NetworkError`/`ParseError`.
+- `get_country_name(nation_id: str) -> Optional[str]` — Returns the country name for `nation_id`, or `None` if missing or on `NetworkError`/`ParseError`.
+- `find_nation_id_by_code(country_code: str) -> Optional[str]` — Case-insensitive lookup returning the `nation_id` for a 3-letter code, or `None` if missing or on error.
+
+### Time Period Helpers
+
+- `fetch_time_periods() -> Dict[str, str]` — Fetches period codes mapped to display names (e.g., `{"2025_m07": "2025 - juli"}`). Raises `NetworkError` or `ParseError`.
+- `get_available_years() -> List[int]` — Returns available years sorted descending, or `[]` on error.
+- `get_months_for_year(year: int) -> Dict[str, str]` — Returns `{period_code: display_name}` for `year`, or `{}` on error.
+
+### In-Memory Caching
+
+- `get_cached_countries() -> Dict[str, Tuple[str, str]]` — Cached wrapper around `fetch_countries()`.
+- `get_cached_time_periods() -> Dict[str, str]` — Cached wrapper around `fetch_time_periods()`.
+- `clear_cache() -> None` — Clears both in-memory reference data caches.
+
+---
+
+## Exceptions
+
+```text
+SwimRankingsError
+├── NetworkError
+│   └── AuthenticationError
+├── AthleteNotFoundError
+├── InvalidGenderError     (import from swimrankings.exceptions)
+└── ParseError             (import from swimrankings.exceptions)
+```
+
+> **Note:** Catch `AuthenticationError` before `NetworkError` whenever handling both.
+
+---
+
+## Environment Variables
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `SWIMRANKINGS_USERNAME` | Swimrankings Member email/username | — |
+| `SWIMRANKINGS_EMAIL` | Alias for `SWIMRANKINGS_USERNAME` | — |
+| `SWIMRANKINGS_PASSWORD` | Swimrankings Member password | — |
+| `SWIMRANKINGS_BROWSER_PATH` | Path to a specific Chrome/Chromium executable | Auto-detected by `nodriver` |
+| `SWIMRANKINGS_CACHE_DIR` | Directory storing Cloudflare clearance (`cf_state.json`) | `~/.cache/swimrankings` |
+| `DISPLAY` | X11 display on Linux; starts `xvfb` via `pyvirtualdisplay` (`1440x900`) when unset | System env |
